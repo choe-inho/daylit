@@ -3,6 +3,7 @@ import 'package:daylit/screen/home/home.dart';
 import 'package:daylit/screen/profile/profile.dart';
 import 'package:daylit/screen/routine/routine.dart';
 import 'package:daylit/screen/search/search.dart';
+import 'package:daylit/util/daylitLoading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -11,8 +12,10 @@ import '../screen/flexable/mainScaffold.dart';
 
 // 라우트 경로들
 class AppRoutes {
-  static const home = '/';
+  static const loading = '/';
   static const login = '/login';
+  static const register = '/register';
+  static const home = '/home';
   static const routine = '/routine';
   static const friends = '/friends';
   static const profile = '/profile';
@@ -40,8 +43,12 @@ class RouterManager {
 
   void initialize() {
     router = GoRouter(
-      initialLocation: AppRoutes.home,
+      initialLocation: AppRoutes.loading,
       routes: [
+        GoRoute(
+            path: AppRoutes.loading,
+            builder: (context, state) => const DaylitLoading()
+        ),
         ShellRoute(
           builder: (context, state, child) => MainScaffold(child: child),
           routes: [
