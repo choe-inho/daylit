@@ -1,3 +1,4 @@
+import 'package:daylit/router/routerManager.dart';
 import 'package:daylit/widget/daylitClassicLogo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -5,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart' hide DeviceType;
 import '../../util/daylitColors.dart';
 import '../../util/daylitLoading.dart';
 import '../../util/deviceUtils.dart';
-import '../../router/routerManager.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -52,9 +52,7 @@ class _LoginState extends State<Login> {
           // 로딩 중일 때 DaylitLoading 오버레이
           if (_isLoading)
             DaylitLoading.overlay(
-              message: '$_loadingProvider 로그인 중...',
-              subtitle: '잠시만 기다려주세요',
-              style: LoadingStyle.card,
+              style: LoadingStyle.brandLogo,
               dismissible: false,
             ),
         ],
@@ -312,9 +310,7 @@ class _LoginState extends State<Login> {
       _isLoading = true;
     });
 
-    await Future.delayed(const Duration(seconds: 2), ()=> setState(() {
-      _isLoading = false;
-    }));
+    await Future.delayed(const Duration(seconds: 2), ()=> RouterManager.instance.goHome());
   }
 
   //서비스 이용약관 및 개인정보 처리방침 미리보기
@@ -344,9 +340,9 @@ class _LoginState extends State<Login> {
               children: [
                 WidgetSpan(
                   child: GestureDetector(
-                    onTap: () => _showTermsDialog('서비스 이용약관'),
+                    onTap: () => _showTermsDialog('이용약관'),
                     child: Text(
-                      '서비스 이용약관',
+                      '이용약관',
                       style: TextStyle(
                         color: DaylitColors.brandPrimary,
                         fontSize: isTablet ? 12.sp : 11.sp,
@@ -375,7 +371,7 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                 ),
-                const TextSpan(text: '에\n동의하게 됩니다.'),
+                const TextSpan(text: '에 동의하게 됩니다.'),
               ],
             ),
             textAlign: TextAlign.center,

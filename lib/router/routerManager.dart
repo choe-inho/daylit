@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../screen/flexable/mainScaffold.dart';
-import '../screen/register/register.dart';
+import '../screen/register/mission.dart';
 
 // 회원가입 페이지 임포트 (새로 생성해야 함)
 // import 'package:daylit/screen/register/register.dart';
@@ -19,7 +19,7 @@ import '../screen/register/register.dart';
 class AppRoutes {
   static const loading = '/';
   static const login = '/login';
-  static const register = '/register';
+  static const mission = '/mission';
   static const home = '/home';
   static const routine = '/routine';
   static const friends = '/friends';
@@ -54,8 +54,7 @@ class RouterManager {
     router = GoRouter(
       initialLocation: AppRoutes.login, // 로그인 페이지로 시작
       redirect: (context, state) {
-        final isOnAuthPage = state.uri.toString() == AppRoutes.login ||
-            state.uri.toString() == AppRoutes.register;
+        final isOnAuthPage = state.uri.toString() == AppRoutes.login;
 
         // 로그인이 안된 상태에서 인증 페이지가 아닌 곳으로 가려고 하면 로그인 페이지로 리다이렉트
         if (!_isLoggedIn && !isOnAuthPage) {
@@ -81,8 +80,9 @@ class RouterManager {
           path: AppRoutes.login,
           builder: (context, state) => const Login(),
         ),
+        // 미션 세팅 페이지
         GoRoute(
-          path: AppRoutes.register,
+          path: AppRoutes.mission,
           builder: (context, state) => const Register(), // 회원가입 페이지
         ),
 
@@ -158,7 +158,9 @@ class RouterManager {
 
   // 커스텀 네비게이션 (히스토리 저장)
   void navigateTo(String path) {
-    _addToHistory(path);
+    if(path != '/login'){
+      _addToHistory(path);
+    }
     router.go(path);
   }
 
@@ -167,7 +169,7 @@ class RouterManager {
     final currentPath = router.state.uri.toString();
 
     // 인증 페이지에서는 앱 종료 처리
-    if (currentPath == AppRoutes.login || currentPath == AppRoutes.register) {
+    if (currentPath == AppRoutes.login) {
       return _handleDoubleBackPress(context);
     }
 
@@ -229,7 +231,7 @@ class RouterManager {
   void goProfile() => navigateTo(AppRoutes.profile);
   void goSearch() => navigateTo(AppRoutes.search);
   void goLogin() => navigateTo(AppRoutes.login);
-  void goRegister() => navigateTo(AppRoutes.register);
+  void goMission() => navigateTo(AppRoutes.mission);
 
   // 디버그용 히스토리 출력
   void _printHistory() {
