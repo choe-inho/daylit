@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DaylitColors {
   // 프라이빗 생성자
@@ -61,6 +62,333 @@ class DaylitColors {
     }
   }
 
+  // ==================== TEXT THEME ====================
+
+  /// 라이트 테마 TextTheme
+  static TextTheme getLightTextTheme() {
+    return TextTheme(
+      // Display 스타일 (가장 큰 텍스트)
+      displayLarge: TextStyle(
+        fontSize: 57.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.25,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      displayMedium: TextStyle(
+        fontSize: 45.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      displaySmall: TextStyle(
+        fontSize: 36.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+
+      // Headline 스타일 (제목)
+      headlineLarge: TextStyle(
+        fontSize: 32.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      headlineMedium: TextStyle(
+        fontSize: 28.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 24.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+
+      // Title 스타일 (섹션 제목)
+      titleLarge: TextStyle(
+        fontSize: 22.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.15,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      titleSmall: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+
+      // Body 스타일 (본문)
+      bodyLarge: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.5,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+        height: 1.5,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.25,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+        height: 1.43,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.4,
+        color: light.textSecondary,
+        fontFamily: 'pre',
+        height: 1.33,
+      ),
+
+      // Label 스타일 (버튼, 라벨)
+      labelLarge: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      labelMedium: TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.5,
+        color: light.textPrimary,
+        fontFamily: 'pre',
+      ),
+      labelSmall: TextStyle(
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.5,
+        color: light.textSecondary,
+        fontFamily: 'pre',
+      ),
+    );
+  }
+
+  /// 다크 테마 TextTheme
+  static TextTheme getDarkTextTheme() {
+    return TextTheme(
+      // Display 스타일 (가장 큰 텍스트)
+      displayLarge: TextStyle(
+        fontSize: 57.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.25,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      displayMedium: TextStyle(
+        fontSize: 45.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      displaySmall: TextStyle(
+        fontSize: 36.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+
+      // Headline 스타일 (제목)
+      headlineLarge: TextStyle(
+        fontSize: 32.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      headlineMedium: TextStyle(
+        fontSize: 28.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 24.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+
+      // Title 스타일 (섹션 제목)
+      titleLarge: TextStyle(
+        fontSize: 22.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.15,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      titleSmall: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+
+      // Body 스타일 (본문)
+      bodyLarge: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.5,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+        height: 1.5,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.25,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+        height: 1.43,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.4,
+        color: dark.textSecondary,
+        fontFamily: 'pre',
+        height: 1.33,
+      ),
+
+      // Label 스타일 (버튼, 라벨)
+      labelLarge: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      labelMedium: TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.5,
+        color: dark.textPrimary,
+        fontFamily: 'pre',
+      ),
+      labelSmall: TextStyle(
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.5,
+        color: dark.textSecondary,
+        fontFamily: 'pre',
+      ),
+    );
+  }
+
+  // ==================== 커스텀 텍스트 스타일 ====================
+
+  /// 버튼 텍스트 스타일
+  static TextStyle buttonLarge({bool isDark = false}) => TextStyle(
+    fontSize: 16.sp,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+    fontFamily: 'pre',
+  );
+
+  static TextStyle buttonMedium({bool isDark = false}) => TextStyle(
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+    fontFamily: 'pre',
+  );
+
+  static TextStyle buttonSmall({bool isDark = false}) => TextStyle(
+    fontSize: 12.sp,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+    fontFamily: 'pre',
+  );
+
+  /// 입력 필드 텍스트 스타일
+  static TextStyle inputText({bool isDark = false}) => TextStyle(
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w400,
+    color: isDark ? dark.textPrimary : light.textPrimary,
+    fontFamily: 'pre',
+  );
+
+  static TextStyle inputLabel({bool isDark = false}) => TextStyle(
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w500,
+    color: isDark ? dark.textSecondary : light.textSecondary,
+    fontFamily: 'pre',
+  );
+
+  static TextStyle inputHint({bool isDark = false}) => TextStyle(
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w400,
+    color: isDark ? dark.textHint : light.textHint,
+    fontFamily: 'pre',
+  );
+
+  /// 카드 텍스트 스타일
+  static TextStyle cardTitle({bool isDark = false}) => TextStyle(
+    fontSize: 18.sp,
+    fontWeight: FontWeight.w600,
+    color: isDark ? dark.textPrimary : light.textPrimary,
+    fontFamily: 'pre',
+  );
+
+  static TextStyle cardSubtitle({bool isDark = false}) => TextStyle(
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w400,
+    color: isDark ? dark.textSecondary : light.textSecondary,
+    fontFamily: 'pre',
+  );
+
+  /// 네비게이션 텍스트 스타일
+  static TextStyle navLabel({bool isDark = false, bool isSelected = false}) => TextStyle(
+    fontSize: 10.sp,
+    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+    color: isSelected
+        ? brandPrimary
+        : (isDark ? dark.textSecondary : light.textSecondary),
+    fontFamily: 'pre',
+  );
+
+  /// 그라데이션 텍스트용 베이스 스타일
+  static TextStyle gradientBase({required double fontSize, FontWeight? fontWeight}) => TextStyle(
+    fontSize: fontSize,
+    fontWeight: fontWeight ?? FontWeight.w600,
+    color: Colors.white, // 그라데이션이 적용되므로 흰색
+    fontFamily: 'pre',
+  );
+
   // ==================== Flutter 테마 데이터 생성 ====================
 
   /// 라이트 테마 데이터
@@ -83,6 +411,9 @@ class DaylitColors {
       scaffoldBackgroundColor: light.background,
       cardColor: light.cardBackground,
       dividerColor: light.divider,
+      shadowColor: light.divider,
+      fontFamily: 'pre',
+      textTheme: getLightTextTheme(), // TextTheme 적용
     );
   }
 
@@ -92,7 +423,7 @@ class DaylitColors {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.dark(
-        primary: brandSecondary, // 다크에서는 좀 더 밝은 색
+        primary: brandSecondary,
         onPrimary: dark.onPrimary,
         secondary: brandPrimary,
         onSecondary: dark.onSecondary,
@@ -106,6 +437,9 @@ class DaylitColors {
       scaffoldBackgroundColor: dark.background,
       cardColor: dark.cardBackground,
       dividerColor: dark.divider,
+      shadowColor: dark.divider,
+      fontFamily: 'pre',
+      textTheme: getDarkTextTheme(), // TextTheme 적용
     );
   }
 }
@@ -297,4 +631,14 @@ class _DarkColors implements _ColorScheme {
       const Color(0xFF1E293B),
     ],
   );
+}
+
+// ==================== EXTENSION FOR EASY ACCESS ====================
+
+/// BuildContext를 통한 간편한 텍스트 스타일 접근
+extension DaylitTextThemeExtension on BuildContext {
+  TextTheme get textTheme => Theme.of(this).textTheme;
+
+  // 다크 테마 여부 확인
+  bool get isDarkTheme => Theme.of(this).brightness == Brightness.dark;
 }
