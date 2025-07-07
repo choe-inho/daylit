@@ -126,10 +126,12 @@ class RouterManager {
       // 로그인 성공 시 히스토리 클리어하고 홈으로
       _historyStack.clear();
       _addToHistory(AppRoutes.home);
+      goHome();
     } else {
       // 로그아웃 시 히스토리 클리어하고 로그인으로
       _historyStack.clear();
       _addToHistory(AppRoutes.login);
+      goLogin();
     }
   }
 
@@ -158,9 +160,10 @@ class RouterManager {
 
   // 커스텀 네비게이션 (히스토리 저장)
   void navigateTo(String path) {
-    if(path != '/login'){
-      _addToHistory(path);
+    if(path == '/home'){ //홈이라면 한번 클리어
+      clearHistory();
     }
+    _addToHistory(path);
     router.go(path);
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../router/routerManager.dart';
 import '../../util/daylitColors.dart';
@@ -41,17 +42,15 @@ class MobileLayout extends StatelessWidget {
                   // 홈
                   _buildNavItem(
                     context,
-                    icon: Icons.home_outlined,
-                    activeIcon: Icons.home,
-                    label: '홈',
+                    icon: LucideIcons.house,
+                    activeIcon: LucideIcons.house600,
                     route: AppRoutes.home,
                   ),
                   // 검색
                   _buildNavItem(
                     context,
-                    icon: Icons.search_outlined,
-                    activeIcon: Icons.search,
-                    label: '검색',
+                    icon: LucideIcons.search,
+                    activeIcon: LucideIcons.search600,
                     route: AppRoutes.search,
                   ),
                   // 센터 루틴 버튼 공간
@@ -59,17 +58,15 @@ class MobileLayout extends StatelessWidget {
                   // 친구
                   _buildNavItem(
                     context,
-                    icon: Icons.people_outline,
-                    activeIcon: Icons.people,
-                    label: '친구',
+                    icon: LucideIcons.users,
+                    activeIcon: LucideIcons.users600,
                     route: AppRoutes.friends,
                   ),
                   // 프로필
                   _buildNavItem(
                     context,
-                    icon: Icons.person_outline,
-                    activeIcon: Icons.person,
-                    label: '프로필',
+                    icon: LucideIcons.circleUser,
+                    activeIcon: LucideIcons.circleUser600,
                     route: AppRoutes.profile,
                   ),
                 ],
@@ -88,7 +85,6 @@ class MobileLayout extends StatelessWidget {
       BuildContext context, {
         required IconData icon,
         required IconData activeIcon,
-        required String label,
         required String route,
       }) {
     final colors = DaylitColors.of(context);
@@ -99,24 +95,10 @@ class MobileLayout extends StatelessWidget {
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 8.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? DaylitColors.brandPrimary : colors.textSecondary,
-              size: 20.r,
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? DaylitColors.brandPrimary : colors.textSecondary,
-                fontSize: 10.sp,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
+        child: Icon(
+          isSelected ? activeIcon : icon,
+          color: isSelected ? DaylitColors.brandPrimary : colors.textSecondary,
+          size: 20.r,
         ),
       ),
     );
@@ -153,24 +135,10 @@ class MobileLayout extends StatelessWidget {
         child: InkWell(
           onTap: () => context.routerManager.navigateTo(AppRoutes.routine),
           borderRadius: BorderRadius.circular(30.r), // 32.5.r → 30.r로 줄임
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isSelected ? Icons.check_circle : Icons.check_circle_outline,
-                color: Colors.white,
-                size: 26.sp, // 28.sp → 26.sp로 줄임
-              ),
-              SizedBox(height: 1.h), // 2.h → 1.h로 줄임
-              Text(
-                '루틴',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 8.sp, // 9.sp → 8.sp로 줄임
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          child: Icon(
+            isSelected ? LucideIcons.calendarCheck2600 : LucideIcons.calendarCheck2,
+            color: Colors.white,
+            size: 26.sp, // 28.sp → 26.sp로 줄임
           ),
         ),
       ),

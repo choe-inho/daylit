@@ -310,7 +310,32 @@ class _LoginState extends State<Login> {
       _isLoading = true;
     });
 
-    await Future.delayed(const Duration(seconds: 2), ()=> RouterManager.instance.goHome());
+    try {
+      // 소셜 로그인 API 호출 (실제로는 여기서 각 소셜 로그인 SDK 사용)
+      await Future.delayed(const Duration(seconds: 2)); // 임시 딜레이
+
+      // 로그인 성공 시 상태 업데이트 후 홈으로 이동
+      RouterManager.instance.setLoggedIn(true); // 👈 이 부분이 핵심!
+
+      // setLoggedIn(true) 내부에서 자동으로 홈으로 이동하므로 별도 goHome() 불필요
+
+    } catch (e) {
+      // 에러 처리
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('로그인에 실패했습니다: ${e.toString()}'),
+            backgroundColor: DaylitColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   //서비스 이용약관 및 개인정보 처리방침 미리보기
