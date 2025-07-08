@@ -21,9 +21,7 @@ class AppRoutes {
   static const mission = '/mission';
   static const home = '/home';
   static const routine = '/routine';
-  static const friends = '/friends';
   static const profile = '/profile';
-  static const search = '/search';
 }
 
 // ==================== 네비게이션 상태 모델 ====================
@@ -215,14 +213,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const Routine(),
           ),
           GoRoute(
-            path: AppRoutes.friends,
-            builder: (context, state) => const Friends(),
-          ),
-          GoRoute(
-            path: AppRoutes.search,
-            builder: (context, state) => const Search(),
-          ),
-          GoRoute(
             path: AppRoutes.profile,
             builder: (context, state) => const Profile(),
           ),
@@ -249,9 +239,7 @@ class NavigationHelper {
   // 네비게이션 헬퍼 메서드들
   void goHome() => navigationNotifier.navigateTo(AppRoutes.home, router);
   void goRoutine() => navigationNotifier.navigateTo(AppRoutes.routine, router);
-  void goFriends() => navigationNotifier.navigateTo(AppRoutes.friends, router);
   void goProfile() => navigationNotifier.navigateTo(AppRoutes.profile, router);
-  void goSearch() => navigationNotifier.navigateTo(AppRoutes.search, router);
   void goLogin() => navigationNotifier.navigateTo(AppRoutes.login, router);
   void goMission() => navigationNotifier.navigateTo(AppRoutes.mission, router);
 

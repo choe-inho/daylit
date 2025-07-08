@@ -25,7 +25,6 @@ class TabletLayout extends StatelessWidget {
                 // 네비게이션 아이템들
                 _buildNavItem(context, Icons.home, AppRoutes.home),
                 _buildNavItem(context, Icons.check_circle, AppRoutes.routine),
-                _buildNavItem(context, Icons.people, AppRoutes.friends),
                 _buildNavItem(context, Icons.person, AppRoutes.profile),
               ],
             ),

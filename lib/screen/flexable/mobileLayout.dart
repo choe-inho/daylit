@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../router/routerProvider.dart';
 import '../../util/daylitColors.dart';
@@ -14,7 +15,6 @@ class MobileLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = DaylitColors.of(context);
-    final navigationHelper = ref.read(navigationHelperProvider);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -41,32 +41,16 @@ class MobileLayout extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildOptimizedNavItem(
+                  _buildNavItem(
                     context,
                     ref,
-                    navigationHelper: navigationHelper,
                     icon: LucideIcons.house,
                     route: AppRoutes.home,
                   ),
-                  _buildOptimizedNavItem(
+                  SizedBox(width: 55.w), // 중앙 플로팅 버튼 공간
+                  _buildNavItem(
                     context,
                     ref,
-                    navigationHelper: navigationHelper,
-                    icon: LucideIcons.search,
-                    route: AppRoutes.search,
-                  ),
-                  SizedBox(width: 55.w),
-                  _buildOptimizedNavItem(
-                    context,
-                    ref,
-                    navigationHelper: navigationHelper,
-                    icon: LucideIcons.users,
-                    route: AppRoutes.friends,
-                  ),
-                  _buildOptimizedNavItem(
-                    context,
-                    ref,
-                    navigationHelper: navigationHelper,
                     icon: LucideIcons.circleUser,
                     route: AppRoutes.profile,
                   ),
@@ -76,25 +60,30 @@ class MobileLayout extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: _buildOptimizedCenterButton(context, ref, navigationHelper),
+      floatingActionButton: _buildCenterButton(context, ref),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget _buildOptimizedNavItem(
+  Widget _buildNavItem(
       BuildContext context,
       WidgetRef ref, {
-        required dynamic navigationHelper,
         required IconData icon,
         required String route,
       }) {
     final colors = DaylitColors.of(context);
 
-    // ✅ Provider로 선택 상태만 감시 (최적화)
-    final isSelected = ref.watch(isRouteSelectedProvider(route));
+    // 현재 라우트 직접 확인
+    final currentRoute = GoRouter.of(context).routerDelegate.currentConfiguration.uri.toString();
+    final isSelected = currentRoute == route;
 
     return InkWell(
-      onTap: () => navigationHelper.navigateTo(route),
+      onTap: () {
+        // 직접 GoRouter 사용
+        if (currentRoute != route) {
+          context.go(route);
+        }
+      },
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
@@ -107,13 +96,12 @@ class MobileLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildOptimizedCenterButton(
-      BuildContext context,
-      WidgetRef ref,
-      dynamic navigationHelper,
-      ) {
+  Widget _buildCenterButton(BuildContext context, WidgetRef ref) {
     final colors = DaylitColors.of(context);
-    final isSelected = ref.watch(isRouteSelectedProvider(AppRoutes.routine));
+
+    // 현재 라우트 직접 확인
+    final currentRoute = GoRouter.of(context).routerDelegate.currentConfiguration.uri.toString();
+    final isSelected = currentRoute == AppRoutes.routine;
 
     return Container(
       width: 60.w,
@@ -139,7 +127,11 @@ class MobileLayout extends ConsumerWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => navigationHelper.navigateTo(AppRoutes.routine),
+          onTap: () {
+            if (currentRoute != AppRoutes.routine) {
+              context.go(AppRoutes.routine);
+            }
+          },
           borderRadius: BorderRadius.circular(30.r),
           child: Icon(
             LucideIcons.calendarCheck2,
@@ -151,19 +143,3 @@ class MobileLayout extends ConsumerWidget {
     );
   }
 }
-
-// 현재 라우트만 감시하는 Provider
-final currentRouteProvider = Provider<String>((ref) {
-  final router = ref.watch(routerProvider);
-  try {
-    return router.state.uri.toString();
-  } catch (e) {
-    return AppRoutes.home; // 기본값
-  }
-});
-
-// 특정 라우트 선택 상태만 감시하는 Provider
-final isRouteSelectedProvider = Provider.family<bool, String>((ref, route) {
-  final currentRoute = ref.watch(currentRouteProvider);
-  return currentRoute == route;
-});
