@@ -1,41 +1,69 @@
-import 'package:daylit/router/routerManager.dart';
 import 'package:daylit/widget/daylitClassicLogo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart' hide DeviceType;
+import '../../controller/auth/authProvider.dart';
 import '../../util/daylitColors.dart';
 import '../../util/daylitLoading.dart';
 import '../../util/deviceUtils.dart';
 
-class Login extends StatefulWidget {
+// auth_provider.dart와 router_provider.dart에서 import 가정
+// import 'auth_provider.dart';
+// import 'router_provider.dart';
+
+class Login extends ConsumerStatefulWidget {
   const Login({super.key});
 
   @override
-  State<Login> createState() => _LoginState();
+  ConsumerState<Login> createState() => _LoginState();
 }
 
-class _LoginState extends State<Login> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-  String? _loadingProvider;
-
+class _LoginState extends ConsumerState<Login> {
   @override
   void initState() {
-    FlutterNativeSplash.remove();
     super.initState();
-  }
+    FlutterNativeSplash.remove();
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+    // 인증 상태 변경 리스너
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listen<AuthState>(authProvider, (previous, next) {
+        // 로그인 성공 시 자동으로 홈으로 이동 (router redirect에서 처리됨)
+        if (next.isLoggedIn && previous?.isLoggedIn == false) {
+          // 성공 메시지 표시
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('로그인에 성공했습니다!'),
+                backgroundColor: DaylitColors.success,
+              ),
+            );
+          }
+        }
+
+        // 에러 메시지 표시
+        if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(next.errorMessage!),
+                backgroundColor: DaylitColors.error,
+              ),
+            );
+            // 에러 메시지 클리어
+            Future.delayed(const Duration(seconds: 3), () {
+              ref.read(authProvider.notifier).clearError();
+            });
+          }
+        }
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = DaylitColors.of(context);
+    final authState = ref.watch(authProvider);
 
     return Scaffold(
       body: Stack(
@@ -50,10 +78,13 @@ class _LoginState extends State<Login> {
             ),
           ),
           // 로딩 중일 때 DaylitLoading 오버레이
-          if (_isLoading)
+          if (authState.isLoading)
             DaylitLoading.overlay(
               style: LoadingStyle.brandLogo,
               dismissible: false,
+              message: authState.currentProvider != null
+                  ? '${_getProviderDisplayName(authState.currentProvider!)} 로그인 중...'
+                  : '로그인 중...',
             ),
         ],
       ),
@@ -83,7 +114,6 @@ class _LoginState extends State<Login> {
             ),
             _buildDivider(colors),
             SizedBox(height: 20.h),
-            // 하단 이용약관 섹션
             _buildSocialLogin(colors),
             SizedBox(height: 40.h),
             _buildTermsSection(colors),
@@ -242,6 +272,8 @@ class _LoginState extends State<Login> {
   }
 
   Widget _buildSocialLogin(dynamic colors, {bool isTablet = false}) {
+    final authState = ref.watch(authProvider);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
@@ -250,24 +282,28 @@ class _LoginState extends State<Login> {
           icon: 'assets/social/google.png',
           social: 'google',
           isTablet: isTablet,
+          isLoading: authState.isLoading && authState.currentProvider == 'google',
         ),
         _buildSocialButton(
           colors,
           icon: 'assets/social/apple.png',
           social: 'apple',
           isTablet: isTablet,
+          isLoading: authState.isLoading && authState.currentProvider == 'apple',
         ),
         _buildSocialButton(
           colors,
           icon: 'assets/social/kakao.png',
           social: 'kakao',
           isTablet: isTablet,
+          isLoading: authState.isLoading && authState.currentProvider == 'kakao',
         ),
         _buildSocialButton(
           colors,
           icon: 'assets/social/discord.png',
           social: 'discord',
           isTablet: isTablet,
+          isLoading: authState.isLoading && authState.currentProvider == 'discord',
         ),
       ],
     );
@@ -278,67 +314,72 @@ class _LoginState extends State<Login> {
         required String icon,
         required String social,
         bool isTablet = false,
+        bool isLoading = false,
       }) {
+    final authState = ref.watch(authProvider);
+    final isDisabled = authState.isLoading; // 다른 버튼이 로딩 중일 때 비활성화
+
     return InkWell(
-      onTap: ()=> _handleSocialLogin(social),
+      onTap: isDisabled ? null : () => _handleSocialLogin(social),
       customBorder: const CircleBorder(),
       child: Container(
         height: isTablet ? 56.h : 48.h,
         width: isTablet ? 56.h : 48.h,
         decoration: BoxDecoration(
-          color: colors.surface,
+          color: isDisabled
+              ? colors.surface.withValues(alpha: 0.5)
+              : colors.surface,
           shape: BoxShape.circle,
-          boxShadow: [
+          boxShadow: isDisabled ? null : [
             BoxShadow(
               blurRadius: 10,
               spreadRadius: 0,
               color: Theme.of(context).shadowColor,
             )
           ],
-          image: DecorationImage(
-            image: AssetImage(icon),
-            fit: BoxFit.cover,
-          ),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // 소셜 아이콘
+            Opacity(
+              opacity: isLoading ? 0.3 : 1.0,
+              child: Image.asset(
+                icon,
+                width: (isTablet ? 32.r : 28.r),
+                height: (isTablet ? 32.r : 28.r),
+                fit: BoxFit.cover,
+              ),
+            ),
+            // 로딩 인디케이터
+            if (isLoading)
+              SizedBox(
+                width: (isTablet ? 24.r : 20.r),
+                height: (isTablet ? 24.r : 20.r),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    DaylitColors.brandPrimary,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  //소셜로그인 처리 함수
-  void _handleSocialLogin(String social) async{
-    setState(() {
-      _isLoading = true;
-    });
-
+  // 소셜로그인 처리 함수 (Riverpod 버전)
+  void _handleSocialLogin(String social) async {
     try {
-      // 소셜 로그인 API 호출 (실제로는 여기서 각 소셜 로그인 SDK 사용)
-      await Future.delayed(const Duration(seconds: 2)); // 임시 딜레이
-
-      // 로그인 성공 시 상태 업데이트 후 홈으로 이동
-      RouterManager.instance.setLoggedIn(true); // 👈 이 부분이 핵심!
-
-      // setLoggedIn(true) 내부에서 자동으로 홈으로 이동하므로 별도 goHome() 불필요
-
+      await ref.read(authProvider.notifier).socialLogin(social);
     } catch (e) {
-      // 에러 처리
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('로그인에 실패했습니다: ${e.toString()}'),
-            backgroundColor: DaylitColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      // 에러는 이미 authProvider에서 처리되고 listen에서 스낵바로 표시됨
+      print('Login error: $e');
     }
   }
 
-  //서비스 이용약관 및 개인정보 처리방침 미리보기
+  // 서비스 이용약관 및 개인정보 처리방침 미리보기
   Widget _buildTermsSection(dynamic colors, {bool isTablet = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 0 : 12.w),
@@ -542,6 +583,21 @@ Daylit(이하 "회사")은 다음의 목적을 위하여 개인정보를 처리�
 회사는 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보 보호법 제17조 및 제18조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다.
 
 ※ 전체 개인정보 처리방침은 설정 > 개인정보 처리방침에서 확인하실 수 있습니다.''';
+    }
+  }
+
+  String _getProviderDisplayName(String provider) {
+    switch (provider.toLowerCase()) {
+      case 'google':
+        return 'Google';
+      case 'apple':
+        return 'Apple';
+      case 'kakao':
+        return 'Kakao';
+      case 'discord':
+        return 'Discord';
+      default:
+        return provider;
     }
   }
 }

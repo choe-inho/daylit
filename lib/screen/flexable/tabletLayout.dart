@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../router/routerManager.dart';
+import '../../router/routerProvider.dart';
 
 class TabletLayout extends StatelessWidget {
   final Widget child;
@@ -38,7 +38,7 @@ class TabletLayout extends StatelessWidget {
   }
 
   Widget _buildNavItem(BuildContext context, IconData icon, String route) {
-    final isSelected = RouterManager.instance.router.state.uri.toString() == route;
+    final isSelected = context.routerHelper.router.state.uri.toString() == route;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -48,7 +48,7 @@ class TabletLayout extends StatelessWidget {
           color: isSelected ? Colors.blue : Colors.grey,
           size: 28,
         ),
-        onPressed: () => context.routerManager.navigateTo(route),
+        onPressed: () => context.routerHelper.navigateTo(route),
       ),
     );
   }

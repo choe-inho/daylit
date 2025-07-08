@@ -1,24 +1,29 @@
-import 'package:daylit/router/routerManager.dart';
+import 'package:daylit/router/routerProvider.dart';
 import 'package:daylit/util/daylitColors.dart';
 import 'package:daylit/util/deviceUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  // RouterManager 초기화
-  RouterManager.instance.initialize();
 
-  runApp(const DayLitDriver());
+  runApp(
+    // ProviderScope로 앱 전체를 감싸기
+    const ProviderScope(
+      child: DayLitDriver(),
+    ),
+  );
 }
 
-class DayLitDriver extends StatelessWidget {
+class DayLitDriver extends ConsumerWidget {
   const DayLitDriver({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Builder(
@@ -32,19 +37,31 @@ class DayLitDriver extends StatelessWidget {
             splitScreenMode: true,
             builder: (context, child) {
               return BackPressHandler(
-                child: MaterialApp.router(
-                  title: 'Daylit',
-                  theme: DaylitColors.getLightTheme(),
-                  darkTheme: DaylitColors.getDarkTheme(),
-                  themeMode: ThemeMode.system,
-                  routerConfig: RouterManager.instance.router,
-                  debugShowCheckedModeBanner: false,
-                ),
+                child: DayLitApp(),
               );
             },
           );
         },
       ),
+    );
+  }
+}
+
+class DayLitApp extends ConsumerWidget {
+  const DayLitApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Riverpod으로 Router 가져오기
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
+      title: 'Daylit',
+      theme: DaylitColors.getLightTheme(),
+      darkTheme: DaylitColors.getDarkTheme(),
+      themeMode: ThemeMode.system,
+      routerConfig: router,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
