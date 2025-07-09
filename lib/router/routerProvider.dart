@@ -163,7 +163,6 @@ final navigationProvider = StateNotifierProvider<NavigationNotifier, NavigationS
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
-  final navigationNotifier = ref.read(navigationProvider.notifier);
 
   return GoRouter(
     initialLocation: AppRoutes.login,

@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   lucide_icons_flutter: ^3.0.6
 
+  #database
+  supabase_flutter:
+
   #라우팅 관리
   go_router:
 
