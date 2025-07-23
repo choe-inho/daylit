@@ -1,4 +1,5 @@
 import 'package:daylit/provider/Router_Provider.dart';
+import 'package:daylit/routes/App_Routes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -126,7 +127,7 @@ class DayLitApp extends StatelessWidget {
 
     return MediaQuery(
       // 시스템 폰트 크기 배율 고정 (접근성 고려시 제거 가능)
-      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
       child: child,
     );
   }
