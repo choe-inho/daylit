@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../util/daylitColors.dart';
+import '../util/Daylit_Colors.dart';
 
-class LinearProgressWidget extends StatefulWidget {
+class ProgressWidget extends StatefulWidget {
   final double progress; // 0.0 ~ 1.0
   final String? label;
   final String? description;
@@ -17,7 +17,7 @@ class LinearProgressWidget extends StatefulWidget {
   final IconData? leadingIcon;
   final IconData? trailingIcon;
 
-  const LinearProgressWidget({
+  const ProgressWidget({
     super.key,
     required this.progress,
     this.label,
@@ -34,10 +34,10 @@ class LinearProgressWidget extends StatefulWidget {
   });
 
   @override
-  State<LinearProgressWidget> createState() => _LinearProgressWidgetState();
+  State<ProgressWidget> createState() => _ProgressWidgetState();
 }
 
-class _LinearProgressWidgetState extends State<LinearProgressWidget>
+class _ProgressWidgetState extends State<ProgressWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;

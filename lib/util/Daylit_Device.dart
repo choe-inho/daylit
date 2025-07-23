@@ -5,7 +5,7 @@ enum DeviceType {
   tablet
 }
 
-class DeviceUtils {
+class DaylitDevice {
   // 디바이스 타입 감지
   static DeviceType getDeviceType(BuildContext context) {
     final shortestSide = MediaQuery.of(context).size.shortestSide;
@@ -65,7 +65,7 @@ class ResponsiveBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final deviceType = DeviceUtils.getDeviceType(context);
+    final deviceType = DaylitDevice.getDeviceType(context);
 
     if (builder != null) {
       return builder!(context, deviceType);

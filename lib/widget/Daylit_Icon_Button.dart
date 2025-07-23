@@ -1,4 +1,4 @@
-import 'package:daylit/util/deviceUtils.dart';
+import 'package:daylit/util/Daylit_Device.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -11,7 +11,7 @@ class DaylitIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = DeviceUtils.isMobile(context);
+    final isMobile = DaylitDevice.isMobile(context);
 
     return Padding(
         padding: EdgeInsetsGeometry.all(isMobile ? 8.r : 12.r),

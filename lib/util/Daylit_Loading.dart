@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../util/daylitColors.dart';
+import '../util/Daylit_Colors.dart';
 import 'dart:math' as math;
 
 /// DayLit 브랜드에 맞는 로딩 위젯 클래스

@@ -43,7 +43,7 @@ dependencies:
   go_router:
 
   #상태관리
-  flutter_riverpod:
+  provider: 
 
   #반응형
   flutter_screenutil:
