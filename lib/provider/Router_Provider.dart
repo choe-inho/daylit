@@ -29,61 +29,174 @@ class RouterProvider extends ChangeNotifier {
 
   // ==================== 네비게이션 메서드들 ====================
 
-  /// 특정 경로로 이동
-  void navigateTo(String path, {Object? extra}) {
+  /// 특정 경로로 이동 (GoRouter.go 사용)
+  void navigateTo(BuildContext context, String path, {Object? extra}) {
     _setLoading(true);
-    _addToHistory(path);
-    _currentPath = path;
-    _setLoading(false);
+
+    try {
+      // 실제 GoRouter 네비게이션 수행
+      context.go(path, extra: extra);
+
+      // 히스토리 및 상태 업데이트
+      _addToHistory(path);
+      _currentPath = path;
+
+      _logNavigation('Navigated to: $path');
+    } catch (e) {
+      _logError('Navigation failed to $path: $e');
+    } finally {
+      _setLoading(false);
+    }
+
+    notifyListeners();
+  }
+
+  /// 페이지를 스택에 추가 (GoRouter.push 사용)
+  void pushTo(BuildContext context, String path, {Object? extra}) {
+    _setLoading(true);
+
+    try {
+      // 스택에 페이지 추가
+      context.push(path, extra: extra);
+
+      // 히스토리 및 상태 업데이트
+      _addToHistory(path);
+      _currentPath = path;
+
+      _logNavigation('Pushed to: $path');
+    } catch (e) {
+      _logError('Push failed to $path: $e');
+    } finally {
+      _setLoading(false);
+    }
+
+    notifyListeners();
+  }
+
+  /// 현재 페이지를 교체 (GoRouter.pushReplacement 사용)
+  void replaceTo(BuildContext context, String path, {Object? extra}) {
+    _setLoading(true);
+
+    try {
+      // 현재 페이지 교체
+      context.pushReplacement(path, extra: extra);
+
+      // 히스토리에서 현재 페이지 제거 후 새 페이지 추가
+      if (_state.historyStack.isNotEmpty) {
+        final newHistory = List<String>.from(_state.historyStack);
+        newHistory.removeLast(); // 현재 페이지 제거
+        newHistory.add(path); // 새 페이지 추가
+        _state = _state.copyWith(historyStack: newHistory);
+      } else {
+        _addToHistory(path);
+      }
+
+      _currentPath = path;
+      _logNavigation('Replaced to: $path');
+    } catch (e) {
+      _logError('Replace failed to $path: $e');
+    } finally {
+      _setLoading(false);
+    }
+
     notifyListeners();
   }
 
   /// 이전 경로로 이동 (뒤로가기)
-  void goBack() {
+  void goBack(BuildContext context) {
     if (_state.canGoBack) {
-      final newHistory = List<String>.from(_state.historyStack);
-      newHistory.removeLast(); // 현재 페이지 제거
+      try {
+        // GoRouter의 뒤로가기 사용
+        context.pop();
 
-      if (newHistory.isNotEmpty) {
-        final previousPath = newHistory.last;
-        _currentPath = previousPath;
-        _state = _state.copyWith(historyStack: newHistory);
-        notifyListeners();
+        // 히스토리 업데이트
+        final newHistory = List<String>.from(_state.historyStack);
+        newHistory.removeLast(); // 현재 페이지 제거
+
+        if (newHistory.isNotEmpty) {
+          _currentPath = newHistory.last;
+          _state = _state.copyWith(historyStack: newHistory);
+          _logNavigation('Went back to: $_currentPath');
+        }
+      } catch (e) {
+        _logError('Go back failed: $e');
       }
+
+      notifyListeners();
     }
   }
 
   /// 홈으로 이동 (히스토리 초기화)
-  void navigateToHome() {
+  void navigateToHome(BuildContext context) {
     _clearHistory();
-    navigateTo(AppRoutes.home);
+    navigateTo(context, AppRoutes.home);
   }
 
   /// 로그인 페이지로 이동 (히스토리 초기화)
-  void navigateToLogin() {
+  void navigateToLogin(BuildContext context) {
     _clearHistory();
-    navigateTo(AppRoutes.login);
+    navigateTo(context, AppRoutes.login);
   }
 
-  /// 특정 페이지로 교체 (현재 페이지를 히스토리에서 제거하고 새 페이지로 교체)
-  void replaceTo(String path, {Object? extra}) {
-    if (_state.historyStack.isNotEmpty) {
-      final newHistory = List<String>.from(_state.historyStack);
-      newHistory.removeLast(); // 현재 페이지 제거
-      newHistory.add(path); // 새 페이지 추가
+  // ==================== Named 라우트 네비게이션 ====================
 
-      _state = _state.copyWith(historyStack: newHistory);
-      _currentPath = path;
-      notifyListeners();
-    } else {
-      navigateTo(path, extra: extra);
+  /// Named 라우트로 이동
+  void navigateToNamed(BuildContext context, String name, {Map<String, String>? pathParameters, Map<String, dynamic>? queryParameters, Object? extra}) {
+    _setLoading(true);
+
+    try {
+      context.goNamed(
+        name,
+        pathParameters: pathParameters ?? {},
+        queryParameters: queryParameters ?? {},
+        extra: extra,
+      );
+
+      // Named 라우트의 경우 실제 경로를 추적하기 어려우므로 name을 사용
+      final routePath = '/named/$name'; // 임시 경로
+      _addToHistory(routePath);
+      _currentPath = routePath;
+
+      _logNavigation('Navigated to named: $name');
+    } catch (e) {
+      _logError('Named navigation failed to $name: $e');
+    } finally {
+      _setLoading(false);
     }
+
+    notifyListeners();
+  }
+
+  /// Named 라우트를 스택에 추가
+  void pushToNamed(BuildContext context, String name, {Map<String, String>? pathParameters, Map<String, dynamic>? queryParameters, Object? extra}) {
+    _setLoading(true);
+
+    try {
+      context.pushNamed(
+        name,
+        pathParameters: pathParameters ?? {},
+        queryParameters: queryParameters ?? {},
+        extra: extra,
+      );
+
+      final routePath = '/named/$name';
+      _addToHistory(routePath);
+      _currentPath = routePath;
+
+      _logNavigation('Pushed to named: $name');
+    } catch (e) {
+      _logError('Named push failed to $name: $e');
+    } finally {
+      _setLoading(false);
+    }
+
+    notifyListeners();
   }
 
   // ==================== 뒤로가기 처리 ====================
 
   /// 시스템 뒤로가기 버튼 처리
-  bool handleBackPress() {
+  bool handleBackPress(BuildContext context) {
     // 로딩 중이면 뒤로가기 무시
     if (_isLoading) {
       return false;
@@ -91,7 +204,7 @@ class RouterProvider extends ChangeNotifier {
 
     // 히스토리가 있으면 이전 페이지로
     if (_state.canGoBack) {
-      goBack();
+      goBack(context);
       return false; // 시스템 뒤로가기 차단
     }
 
@@ -127,9 +240,8 @@ class RouterProvider extends ChangeNotifier {
     }
   }
 
-  /// 종료 경고 표시 (스낵바 등으로 구현 가능)
+  /// 종료 경고 표시
   void _showExitWarning() {
-    // TODO: 스낵바나 토스트로 "뒤로가기를 한 번 더 누르면 종료됩니다" 메시지 표시
     debugPrint('🚪 [RouterProvider] Press back again to exit');
   }
 
@@ -150,7 +262,7 @@ class RouterProvider extends ChangeNotifier {
     }
 
     _state = _state.copyWith(historyStack: newHistory);
-    _printHistory(); // 디버그용
+    _printHistory();
   }
 
   /// 히스토리 초기화
@@ -218,13 +330,25 @@ class RouterProvider extends ChangeNotifier {
   // ==================== 페이지별 네비게이션 헬퍼들 ====================
 
   /// 퀘스트 페이지로 이동
-  void navigateToQuest() {
-    navigateTo(AppRoutes.quest);
+  void navigateToQuest(BuildContext context) {
+    navigateTo(context, AppRoutes.quest);
   }
 
   /// 프로필 페이지로 이동
-  void navigateToProfile() {
-    navigateTo(AppRoutes.profile);
+  void navigateToProfile(BuildContext context) {
+    navigateTo(context, AppRoutes.profile);
+  }
+
+  // ==================== 로깅 메서드들 ====================
+
+  /// 네비게이션 로깅
+  void _logNavigation(String message) {
+    debugPrint('🧭 [RouterProvider] $message');
+  }
+
+  /// 에러 로깅
+  void _logError(String message) {
+    debugPrint('❌ [RouterProvider] $message');
   }
 
   // ==================== 정리 ====================

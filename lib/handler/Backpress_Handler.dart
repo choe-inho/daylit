@@ -18,34 +18,36 @@ class BackPressHandler extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final router = Provider.of<RouterProvider>(context);
+    return Consumer<RouterProvider>(
+      builder: (context, router, child) {
+        return PopScope(
+          // canPop을 false로 설정하여 모든 뒤로가기를 직접 처리
+          canPop: false,
 
-    return PopScope(
-      // canPop을 false로 설정하여 모든 뒤로가기를 직접 처리
-      canPop: false,
+          // 뒤로가기 버튼이 눌렸을 때 호출되는 콜백
+          onPopInvokedWithResult: (didPop, result) {
+            // 이미 pop이 처리되었으면 추가 처리하지 않음
+            if (didPop) {
+              return;
+            }
 
-      // 뒤로가기 버튼이 눌렸을 때 호출되는 콜백
-      onPopInvokedWithResult: (didPop, result) {
-        // 이미 pop이 처리되었으면 추가 처리하지 않음
-        if (didPop) {
-          return;
-        }
+            // RouterProvider의 뒤로가기 처리 로직 실행 (context 전달)
+            final shouldExit = router.handleBackPress(context);
 
-        // RouterProvider의 뒤로가기 처리 로직 실행
-        final shouldExit = router.handleBackPress();
+            // true가 반환되면 시스템 뒤로가기 허용 (앱 종료)
+            if (shouldExit) {
+              _logInfo('App exit allowed');
+              // Navigator.pop(context)를 호출하여 실제 뒤로가기 실행
+              Navigator.of(context).pop();
+            } else {
+              _logInfo('Back press handled by router');
+              // false면 RouterProvider가 자체적으로 처리했으므로 추가 작업 없음
+            }
+          },
 
-        // true가 반환되면 시스템 뒤로가기 허용 (앱 종료)
-        if (shouldExit) {
-          _logInfo('App exit allowed');
-          // Navigator.pop(context)를 호출하여 실제 뒤로가기 실행
-          Navigator.of(context).pop();
-        } else {
-          _logInfo('Back press handled by router');
-          // false면 RouterProvider가 자체적으로 처리했으므로 추가 작업 없음
-        }
+          child: this.child,
+        );
       },
-
-      child: child,
     );
   }
 
