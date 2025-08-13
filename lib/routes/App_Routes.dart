@@ -1,3 +1,4 @@
+import 'package:daylit/init/Initialize_App.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../pages/auth/Login_Page.dart';
@@ -9,7 +10,8 @@ import '../pages/single/Loading_Page.dart';
 
 
 class AppRoutes {
-  static const loading = '/';
+  static const init = '/';
+  static const loading = '/loading';
   static const login = '/login';
   static const home = '/home';
   static const quest = '/quest';
@@ -25,7 +27,7 @@ final GoRouter router = GoRouter(
   // ==================== 기본 설정 ====================
 
   /// 초기 라우트 (앱 시작 시 표시될 페이지)
-  initialLocation: AppRoutes.loading,
+  initialLocation: AppRoutes.init,
 
   /// 디버그 로그 활성화 (개발 모드에서만)
   debugLogDiagnostics: true,
@@ -37,6 +39,12 @@ final GoRouter router = GoRouter(
 
   routes: [
     // 로딩 페이지 (스플래시)
+    GoRoute(
+        path: AppRoutes.init,
+        name: 'init',
+        builder: (context, state) => const InitializeApp()
+    ),
+
     GoRoute(
       path: AppRoutes.loading,
       name: 'loading',
