@@ -1,3 +1,7 @@
+import 'package:daylit/pages/auth/Login_Page_Mobile.dart';
+import 'package:daylit/pages/auth/Login_Page_Tablet.dart';
+
+import '../../responsive/Responsive_Layout_Extensions.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
@@ -5,6 +9,11 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      body: ResponsiveLayoutExtensions.auth(
+          mobileLayout: LoginPageMobile(),
+          tabletLayout: LoginPageTablet()
+      )
+    );
   }
 }

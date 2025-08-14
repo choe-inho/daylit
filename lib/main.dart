@@ -1,4 +1,5 @@
 import 'package:daylit/provider/Router_Provider.dart';
+import 'package:daylit/provider/User_Provider.dart';
 import 'package:daylit/routes/App_Routes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,14 +20,14 @@ void main() async {
   // Flutter 엔진 초기화 보장
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
-  // 스플래시 화면 유지 (앱 로딩 완료까지)
+  // 스플래시 화면 유지 (InitializeApp에서 제거할 때까지)
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+  // 글로벌 에러 핸들러 초기화 (필요시)
+  GlobalErrorHandler.initialize();
+
   // 앱 실행
-  runApp(
-    // Riverpod을 사용한 상태 관리를 위해 ProviderScope로 앱 전체를 감싸기
-    const DayLitDriver()
-  );
+  runApp(const DayLitDriver());
 }
 
 // ==================== 앱 드라이버 ====================
@@ -52,22 +53,30 @@ class DayLitDriver extends StatelessWidget {
 
           // ScreenUtil 초기화 및 반응형 UI 설정
           return MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_)=> RouterProvider())
-            ],
-            builder: (context, child) {
-              return ScreenUtilInit(
-                designSize: designSize,
-                minTextAdapt: true,
-                splitScreenMode: true,
-                builder: (context, child) {
-                  // 뒤로가기 처리와 함께 실제 앱 실행
-                  return BackPressHandler(
-                    child: DayLitApp(),
-                  );
-                },
-              );
-            }
+              providers: [
+                // 라우터 상태 관리
+                ChangeNotifierProvider(create: (_) => RouterProvider()),
+
+                // 사용자 상태 관리
+                ChangeNotifierProvider(create: (_) => UserProvider()),
+
+                // 필요한 다른 Provider들을 여기에 추가
+                // ChangeNotifierProvider(create: (_) => WalletProvider()),
+                // ChangeNotifierProvider(create: (_) => RoutineProvider()),
+              ],
+              builder: (context, child) {
+                return ScreenUtilInit(
+                  designSize: designSize,
+                  minTextAdapt: true,
+                  splitScreenMode: true,
+                  builder: (context, child) {
+                    // 뒤로가기 처리와 함께 실제 앱 실행
+                    return BackPressHandler(
+                      child: DayLitApp(),
+                    );
+                  },
+                );
+              }
           );
         },
       ),
@@ -76,7 +85,7 @@ class DayLitDriver extends StatelessWidget {
 
   /// 정보 로깅
   void _logInfo(String message) {
-    print('🚀 [DayLitDriver] $message');
+    debugPrint('🚀 [DayLitDriver] $message');
   }
 }
 
@@ -106,7 +115,6 @@ class DayLitApp extends StatelessWidget {
       // ==================== 라우터 설정 ====================
       routerConfig: router,
 
-
       // ==================== 기타 설정 ====================
       // 머티리얼 앱 설정
       builder: (context, child) {
@@ -134,7 +142,7 @@ class DayLitApp extends StatelessWidget {
 
   /// 정보 로깅
   void _logInfo(String message) {
-    print('📱 [DayLitApp] $message');
+    debugPrint('📱 [DayLitApp] $message');
   }
 }
 
@@ -245,16 +253,37 @@ bool get kDebugMode {
 
 // ==================== 사용 예시 주석 ====================
 /*
-앱 구조:
-1. main() - 앱 시작점
-2. DayLitDriver - 디바이스 감지 및 ScreenUtil 초기화
-3. DayLitApp - 실제 앱 로직, 라우터 및 테마 설정
-4. BackPressHandler - 뒤로가기 동작 커스터마이징
-5. 각종 Provider들 - 상태 관리
+앱 시작 플로우:
+1. main()
+   - WidgetsFlutterBinding.ensureInitialized()
+   - FlutterNativeSplash.preserve() (스플래시 유지)
+   - GlobalErrorHandler.initialize() (에러 핸들러 설정)
+   - runApp(DayLitDriver())
 
-사용법:
-- 새로운 전역 설정이 필요한 경우 DayLitApp의 builder에 추가
-- 앱 상수가 필요한 경우 AppConstants에 정의
-- 에러 처리가 필요한 경우 GlobalErrorHandler 사용
-- 로깅이 필요한 경우 각 클래스의 _logInfo, _logError 메서드 참조
+2. DayLitDriver
+   - 디바이스 타입 감지
+   - MultiProvider로 상태 관리 클래스들 주입
+   - ScreenUtilInit으로 반응형 UI 초기화
+   - BackPressHandler로 뒤로가기 처리
+
+3. DayLitApp
+   - MaterialApp.router로 GoRouter 설정
+   - 테마 설정 (라이트/다크)
+   - router의 initialLocation이 AppRoutes.init (/)
+
+4. InitializeApp (첫 번째 라우트)
+   - 앱 초기화 작업 수행
+   - 완료 후 FlutterNativeSplash.remove() (스플래시 제거)
+   - 로그인 상태에 따라 홈/로그인 페이지로 라우팅
+
+핵심 변경사항:
+- UserProvider를 MultiProvider에 추가
+- GlobalErrorHandler.initialize() 추가
+- 스플래시 제거 타이밍을 InitializeApp에 위임
+- Provider 구조 정리
+
+추가로 구현할 Provider들:
+- WalletProvider (릿 토큰 관리)
+- RoutineProvider (루틴 상태 관리)
+- SettingsProvider (설정 관리)
 */
