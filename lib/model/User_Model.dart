@@ -7,6 +7,7 @@ class UserModel {
   final String uid;
   final String? id;
   final Social socialType;
+  final String? profileUrl;
   final String email;
   final DateTime? lastLogin;
   final String? gender;
@@ -20,6 +21,7 @@ class UserModel {
     required this.email,
     this.lastLogin,
     this.gender,
+    this.profileUrl,
     required this.createAt,
     required this.level
   });
@@ -34,7 +36,8 @@ class UserModel {
         lastLogin: DateTimeUtils.fromUtcString(json['lastLogin']),
         gender: json['gender'],
         createAt: DateTimeUtils.fromUtcString(json['createAt']) ?? DateTime.now(),
-        level: json['level'] ?? 1
+        level: json['level'] ?? 1,
+        profileUrl: json['profileUrl']
     );
   }
 
@@ -48,7 +51,8 @@ class UserModel {
       'lastLogin': lastLogin != null ? DateTimeUtils.toUtcString(lastLogin!) : null,
       'gender': gender,
       'createAt': DateTimeUtils.toUtcString(createAt),
-      'level': level
+      'level': level,
+      'profileUrl' : profileUrl
     };
   }
 
@@ -59,7 +63,8 @@ class UserModel {
         socialType: Social.kakao,
         email: '',
         createAt: DateTime.now(),
-        level: 1
+        level: 1,
+        profileUrl: null
     );
   }
 
@@ -72,6 +77,7 @@ class UserModel {
     String? gender,
     int? level,
     DateTime? createAt,
+    String? profileUrl
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -82,6 +88,7 @@ class UserModel {
       gender: gender ?? this.gender,
       level: level ?? this.level,
       createAt: createAt ?? this.createAt,
+      profileUrl: profileUrl
     );
   }
 

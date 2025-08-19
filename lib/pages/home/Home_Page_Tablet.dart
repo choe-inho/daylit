@@ -1,0 +1,21 @@
+import 'package:flutter/material.dart';
+
+class HomePageTablet extends StatefulWidget {
+  const HomePageTablet({super.key});
+
+  @override
+  State<HomePageTablet> createState() => _HomePageTabletState();
+}
+
+class _HomePageTabletState extends State<HomePageTablet> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+
+        ],
+      ),
+    );
+  }
+}

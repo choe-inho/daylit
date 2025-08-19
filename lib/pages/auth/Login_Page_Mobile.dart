@@ -1,8 +1,10 @@
+import 'package:daylit/handler/Dialog_Handler.dart';
 import 'package:daylit/util/Daylit_Colors.dart';
 import 'package:daylit/util/Daylit_Social.dart';
 import 'package:daylit/widget/Daylit_Logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginPageMobile extends StatefulWidget {
   const LoginPageMobile({super.key});
@@ -66,10 +68,9 @@ class _LoginPageMobileState extends State<LoginPageMobile>
     try {
       // TODO: 실제 소셜 로그인 로직 구현
       await Future.delayed(const Duration(seconds: 2));
-
       // 성공 시 홈으로 이동
       if (mounted) {
-        // Navigator.pushReplacementNamed(context, '/home');
+        context.go('/home');
       }
 
     } catch (e) {

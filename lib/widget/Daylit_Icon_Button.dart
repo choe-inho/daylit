@@ -14,7 +14,7 @@ class DaylitIconButton extends StatelessWidget {
     final isMobile = DaylitDevice.isMobile(context);
 
     return Padding(
-        padding: EdgeInsetsGeometry.all(isMobile ? 8.r : 12.r),
+        padding: EdgeInsetsGeometry.symmetric(horizontal: isMobile ? 8.r : 12.r),
         child: IconButton(onPressed: onPressed, icon: Icon(iconData, color: color), iconSize: size ?? (isMobile ? 24.r : 36.r),),
     );
   }

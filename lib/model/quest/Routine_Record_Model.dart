@@ -1,10 +1,10 @@
 import '../../util/DateTime_Utils.dart';
 import '../../util/Routine_Utils.dart';
 
-class RoutineRecordModel {
-  final String rrid;                   // 기록 ID
-  final String rid;                    // 루틴 ID
-  final String rdid;                   // 루틴 데이 ID
+class QuestRecordModel {
+  final String qrid;                   // 기록 ID
+  final String qid;                    // 루틴 ID
+  final String qdid;                   // 루틴 데이 ID
   final DateTime date;                 // 실행일
   final RecordStatus status;           // 실행 결과
   final String? memo;                  // 사용자 메모
@@ -12,10 +12,10 @@ class RoutineRecordModel {
   final int rating;                    // 만족도 (1-5)
   final DateTime createdAt;            // 기록 생성일
 
-  RoutineRecordModel({
-    required this.rrid,
-    required this.rid,
-    required this.rdid,
+  QuestRecordModel({
+    required this.qrid,
+    required this.qid,
+    required this.qdid,
     required this.date,
     required this.status,
     this.memo,
@@ -25,9 +25,9 @@ class RoutineRecordModel {
   });
 
   // 실행 기록 생성
-  factory RoutineRecordModel.create({
-    required String rid,
-    required String rdid,
+  factory QuestRecordModel.create({
+    required String qid,
+    required String qdid,
     required RecordStatus status,
     String? memo,
     int? actualMinutes,
@@ -35,10 +35,10 @@ class RoutineRecordModel {
   }) {
     final now = DateTime.now();
 
-    return RoutineRecordModel(
-      rrid: 'record_${now.millisecondsSinceEpoch}_$rid',
-      rid: rid,
-      rdid: rdid,
+    return QuestRecordModel(
+      qrid: 'record_${now.millisecondsSinceEpoch}_$qid',
+      qid: qid,
+      qdid: qdid,
       date: now,
       status: status,
       memo: memo,
@@ -49,11 +49,11 @@ class RoutineRecordModel {
   }
 
   // JSON에서 생성
-  factory RoutineRecordModel.fromJson(Map<String, dynamic> json) {
-    return RoutineRecordModel(
-      rrid: json['rrid'] ?? '',
-      rid: json['rid'] ?? '',
-      rdid: json['rdid'] ?? '',
+  factory QuestRecordModel.fromJson(Map<String, dynamic> json) {
+    return QuestRecordModel(
+      qrid: json['qrid'] ?? '',
+      qid: json['qid'] ?? '',
+      qdid: json['qdid'] ?? '',
       date: DateTimeUtils.fromUtcString(json['date']) ?? DateTime.now(),
       status: toRecordStatus(json['status']),
       memo: json['memo'],
@@ -66,9 +66,9 @@ class RoutineRecordModel {
   // toMap
   Map<String, dynamic> toMap() {
     return {
-      'rrid': rrid,
-      'rid': rid,
-      'rdid': rdid,
+      'qrid': qrid,
+      'qid': qid,
+      'qdid': qdid,
       'date': DateTimeUtils.toUtcString(date),
       'status': status.value,
       'memo': memo,
@@ -79,10 +79,10 @@ class RoutineRecordModel {
   }
 
   // copyWith
-  RoutineRecordModel copyWith({
-    String? rrid,
-    String? rid,
-    String? rdid,
+  QuestRecordModel copyWith({
+    String? qrid,
+    String? qid,
+    String? qdid,
     DateTime? date,
     RecordStatus? status,
     String? memo,
@@ -90,10 +90,10 @@ class RoutineRecordModel {
     int? rating,
     DateTime? createdAt,
   }) {
-    return RoutineRecordModel(
-      rrid: rrid ?? this.rrid,
-      rid: rid ?? this.rid,
-      rdid: rdid ?? this.rdid,
+    return QuestRecordModel(
+      qrid: qrid ?? this.qrid,
+      qid: qid ?? this.qid,
+      qdid: qdid ?? this.qdid,
       date: date ?? this.date,
       status: status ?? this.status,
       memo: memo ?? this.memo,
@@ -111,7 +111,7 @@ class RoutineRecordModel {
 
   @override
   String toString() {
-    return 'RoutineRecordModel{rrid: $rrid, date: $formattedDate, status: $status}';
+    return 'QuestRecordModel{qrid: $qrid, date: $formattedDate, status: $status}';
   }
 
   static RecordStatus toRecordStatus(String? status) {

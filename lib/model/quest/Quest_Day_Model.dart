@@ -3,9 +3,9 @@ import 'package:flutter/material.dart' hide DateUtils;
 import '../../util/DateTime_Utils.dart';
 import '../../util/Routine_Utils.dart';
 
-class RoutineDayModel {
-  final String rdid;                   // 루틴 데이 ID
-  final String rid;                    // 소속 루틴 ID
+class QuestDayModel {
+  final String qdid;                   // 루틴 데이 ID
+  final String qid;                    // 소속 루틴 ID
   final DateTime date;                 // 해당 날짜
   final int dayNumber;                 // 몇 번째 날 (1, 2, 3...)
   final String mission;                // AI가 생성한 미션 내용
@@ -15,9 +15,9 @@ class RoutineDayModel {
   final List<String> tips;             // AI가 제공한 팁들
   final DateTime createdAt;            // 생성일
 
-  RoutineDayModel({
-    required this.rdid,
-    required this.rid,
+  QuestDayModel({
+    required this.qdid,
+    required this.qid,
     required this.date,
     required this.dayNumber,
     required this.mission,
@@ -29,17 +29,17 @@ class RoutineDayModel {
   });
 
   // AI 응답으로부터 생성
-  factory RoutineDayModel.fromAI({
-    required String rid,
+  factory QuestDayModel.fromAI({
+    required String qid,
     required DateTime date,
     required int dayNumber,
     required Map<String, dynamic> aiResponse,
   }) {
     final now = DateTime.now();
 
-    return RoutineDayModel(
-      rdid: 'routine_day_${date.millisecondsSinceEpoch}_$rid',
-      rid: rid,
+    return QuestDayModel(
+      qdid: 'routine_day_${date.millisecondsSinceEpoch}_$qid',
+      qid: qid,
       date: date,
       dayNumber: dayNumber,
       mission: aiResponse['mission'] ?? '',
@@ -52,10 +52,10 @@ class RoutineDayModel {
   }
 
   // JSON에서 생성
-  factory RoutineDayModel.fromJson(Map<String, dynamic> json) {
-    return RoutineDayModel(
-      rdid: json['rdid'] ?? '',
-      rid: json['rid'] ?? '',
+  factory QuestDayModel.fromJson(Map<String, dynamic> json) {
+    return QuestDayModel(
+      qdid: json['qdid'] ?? '',
+      qid: json['qid'] ?? '',
       date: DateTimeUtils.fromUtcString(json['date']) ?? DateTime.now(),
       dayNumber: json['day_number'] ?? 1,
       mission: json['mission'] ?? '',
@@ -70,8 +70,8 @@ class RoutineDayModel {
   // toMap
   Map<String, dynamic> toMap() {
     return {
-      'rdid': rdid,
-      'rid': rid,
+      'qdid': qdid,
+      'qid': qid,
       'date': DateTimeUtils.toUtcString(date),
       'day_number': dayNumber,
       'mission': mission,
@@ -84,9 +84,9 @@ class RoutineDayModel {
   }
 
   // copyWith
-  RoutineDayModel copyWith({
-    String? rdid,
-    String? rid,
+  QuestDayModel copyWith({
+    String? qdid,
+    String? qid,
     DateTime? date,
     int? dayNumber,
     String? mission,
@@ -96,9 +96,9 @@ class RoutineDayModel {
     List<String>? tips,
     DateTime? createdAt,
   }) {
-    return RoutineDayModel(
-      rdid: rdid ?? this.rdid,
-      rid: rid ?? this.rid,
+    return QuestDayModel(
+      qdid: qdid ?? this.qdid,
+      qid: qid ?? this.qid,
       date: date ?? this.date,
       dayNumber: dayNumber ?? this.dayNumber,
       mission: mission ?? this.mission,
@@ -118,7 +118,7 @@ class RoutineDayModel {
 
   @override
   String toString() {
-    return 'RoutineDayModel{rdid: $rdid, date: $formattedDate, mission: $mission}';
+    return 'RoutineDayModel{qdid: $qdid, date: $formattedDate, mission: $mission}';
   }
 
   static MissionDifficulty toDifficulty(String? difficulty) {

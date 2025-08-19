@@ -1,3 +1,4 @@
+import 'package:daylit/provider/Quest_Provider.dart';
 import 'package:daylit/provider/Router_Provider.dart';
 import 'package:daylit/provider/User_Provider.dart';
 import 'package:daylit/routes/App_Routes.dart';
@@ -60,9 +61,11 @@ class DayLitDriver extends StatelessWidget {
                 // 사용자 상태 관리
                 ChangeNotifierProvider(create: (_) => UserProvider()),
 
+                // 사용자 퀘스트 관리
+                ChangeNotifierProvider(create: (_) => QuestProvider()),
+
                 // 필요한 다른 Provider들을 여기에 추가
                 // ChangeNotifierProvider(create: (_) => WalletProvider()),
-                // ChangeNotifierProvider(create: (_) => RoutineProvider()),
               ],
               builder: (context, child) {
                 return ScreenUtilInit(

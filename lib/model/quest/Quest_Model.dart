@@ -2,9 +2,9 @@ import '../../util/DateTime_Utils.dart';
 import '../../util/Routine_Utils.dart';
 
 /// 전체 루틴 정보 모델
-class RoutineModel {
-  final String rid;                    // 루틴 ID
-  final String userId;                 // 사용자 ID
+class QuestModel {
+  final String qid;                    // 루틴 ID
+  final String uid;                 // 사용자 ID
   final String purpose;                // 목적 (100자 제한)
   final int totalDays;                 // 총 루틴 일수
   final int totalCost;                 // 총 비용 (릿)
@@ -15,9 +15,9 @@ class RoutineModel {
   final DateTime? completedAt;         // 완료일
   final Map<String, dynamic>? aiRequestData;  // AI 요청 데이터 저장용
 
-  RoutineModel({
-    required this.rid,
-    required this.userId,
+  QuestModel({
+    required this.qid,
+    required this.uid,
     required this.purpose,
     required this.totalDays,
     required this.totalCost,
@@ -30,8 +30,8 @@ class RoutineModel {
   });
 
   // AI 루틴 생성용 팩토리
-  factory RoutineModel.createForAI({
-    required String userId,
+  factory QuestModel.createForAI({
+    required String uid,
     required String purpose,
     required int totalDays,
     required DateTime startDate,
@@ -40,9 +40,9 @@ class RoutineModel {
     final now = DateTime.now();
     final cost = totalDays * 10; // 하루당 10릿
 
-    return RoutineModel(
-      rid: 'routine_${now.millisecondsSinceEpoch}_$userId',
-      userId: userId,
+    return QuestModel(
+      qid: 'quest_${now.millisecondsSinceEpoch}_$uid',
+      uid: uid,
       purpose: purpose,
       totalDays: totalDays,
       totalCost: cost,
@@ -55,10 +55,10 @@ class RoutineModel {
   }
 
   // JSON에서 생성
-  factory RoutineModel.fromJson(Map<String, dynamic> json) {
-    return RoutineModel(
-      rid: json['rid'] ?? '',
-      userId: json['user_id'] ?? '',
+  factory QuestModel.fromJson(Map<String, dynamic> json) {
+    return QuestModel(
+      qid: json['qid'] ?? '',
+      uid: json['uid'] ?? '',
       purpose: json['purpose'] ?? '',
       totalDays: json['total_days'] ?? 0,
       totalCost: json['total_cost'] ?? 0,
@@ -74,8 +74,8 @@ class RoutineModel {
   // toMap
   Map<String, dynamic> toMap() {
     return {
-      'rid': rid,
-      'user_id': userId,
+      'qid': qid,
+      'uid': uid,
       'purpose': purpose,
       'total_days': totalDays,
       'total_cost': totalCost,
@@ -89,9 +89,9 @@ class RoutineModel {
   }
 
   // copyWith
-  RoutineModel copyWith({
-    String? rid,
-    String? userId,
+  QuestModel copyWith({
+    String? qid,
+    String? uid,
     String? purpose,
     int? totalDays,
     int? totalCost,
@@ -102,9 +102,9 @@ class RoutineModel {
     DateTime? completedAt,
     Map<String, dynamic>? aiRequestData,
   }) {
-    return RoutineModel(
-      rid: rid ?? this.rid,
-      userId: userId ?? this.userId,
+    return QuestModel(
+      qid: qid ?? this.qid,
+      uid: uid ?? this.uid,
       purpose: purpose ?? this.purpose,
       totalDays: totalDays ?? this.totalDays,
       totalCost: totalCost ?? this.totalCost,
@@ -127,7 +127,7 @@ class RoutineModel {
 
   @override
   String toString() {
-    return 'RoutineModel{rid: $rid, purpose: $purpose, status: $status, days: $totalDays}';
+    return 'RoutineModel{qid: $qid, purpose: $purpose, status: $status, days: $totalDays}';
   }
 
   static RoutineStatus toRoutineStatus(String? status) {

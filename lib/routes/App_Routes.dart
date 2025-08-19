@@ -1,4 +1,5 @@
 import 'package:daylit/init/Initialize_App.dart';
+import 'package:daylit/pages/settings/Settings_Page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../pages/auth/Login_Page.dart';
@@ -16,6 +17,7 @@ class AppRoutes {
   static const home = '/home';
   static const quest = '/quest';
   static const profile = '/profile';
+  static const settings = '/settings';
 }
 
 /// 앱의 전체 라우팅 설정을 관리하는 GoRouter 인스턴스
@@ -78,6 +80,13 @@ final GoRouter router = GoRouter(
       name: 'profile',
       builder: (context, state) => const ProfilePage(),
     ),
+
+    // 설정 페이지
+    GoRoute(
+      path: AppRoutes.settings,
+      name: 'settings',
+      builder: (context, state) => const SettingsPage(),
+    ),
   ],
 
   // ==================== 네비게이션 가드 ====================
@@ -120,25 +129,3 @@ extension AppRouterExtension on GoRouter {
     return currentPath == path;
   }
 }
-
-// ==================== 사용 예시 ====================
-/*
-// main.dart에서 사용
-MaterialApp.router(
-  routerConfig: router,
-  // 다른 설정들...
-);
-
-// 페이지에서 네비게이션 사용
-context.go(AppRoutes.home);           // 직접 이동
-context.push(AppRoutes.profile);      // 스택에 추가
-context.pop();                        // 뒤로가기
-context.replace(AppRoutes.login);     // 현재 페이지 교체
-
-// Named 라우트 사용
-context.goNamed('home');
-context.pushNamed('profile');
-
-// 파라미터와 함께 사용
-context.go('/profile', extra: {'userId': 123});
-*/
