@@ -23,6 +23,7 @@ class _SettingsPageState extends State<SettingsPage> {
     userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
         backgroundColor: theme.scaffoldBackgroundColor,
         title: Text('설정', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),),
       ),

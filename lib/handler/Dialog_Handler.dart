@@ -2,6 +2,10 @@ import 'package:daylit/handler/dialog/Confirm_Dialog.dart';
 import 'package:daylit/handler/dialog/Content_Sheet.dart';
 import 'package:flutter/material.dart';
 
+import 'dialog/ColorMode_Sheet.dart';
+import 'dialog/Language_Sheet.dart';
+import 'dialog/Update_Sheet.dart';
+
 class DialogHandler{
   DialogHandler._();
 
@@ -49,6 +53,45 @@ class DialogHandler{
         image: image,
         showHandle: showHandle,
       ),
+    );
+  }
+
+  /// 업데이트 시트 표시
+  static Future<bool?> showUpdateSheet({
+    required BuildContext context,
+    required UpdateInfo updateInfo,
+  }) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: !updateInfo.isForceUpdate,
+      enableDrag: !updateInfo.isForceUpdate,
+      backgroundColor: Colors.transparent,
+      builder: (context) => UpdateSheet(updateInfo: updateInfo),
+    );
+  }
+
+  /// 색상 모드 선택 시트 표시
+  static Future<void> showColorModeSheet({
+    required BuildContext context,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const ColorModeSheet(),
+    );
+  }
+
+  /// 언어 선택 시트 표시
+  static Future<void> showLanguageSheet({
+    required BuildContext context,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const LanguageSheet(),
     );
   }
 }

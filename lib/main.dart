@@ -1,9 +1,11 @@
+import 'package:daylit/provider/App_State.dart';
 import 'package:daylit/provider/Quest_Provider.dart';
 import 'package:daylit/provider/Router_Provider.dart';
 import 'package:daylit/provider/User_Provider.dart';
 import 'package:daylit/routes/App_Routes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart' hide DeviceType;
 import 'package:daylit/util/Daylit_Colors.dart';
@@ -55,6 +57,9 @@ class DayLitDriver extends StatelessWidget {
           // ScreenUtil 초기화 및 반응형 UI 설정
           return MultiProvider(
               providers: [
+                // 앱 상태 관리
+                ChangeNotifierProvider(create: (_)=> AppState()),
+
                 // 라우터 상태 관리
                 ChangeNotifierProvider(create: (_) => RouterProvider()),
 
@@ -63,6 +68,7 @@ class DayLitDriver extends StatelessWidget {
 
                 // 사용자 퀘스트 관리
                 ChangeNotifierProvider(create: (_) => QuestProvider()),
+
 
                 // 필요한 다른 Provider들을 여기에 추가
                 // ChangeNotifierProvider(create: (_) => WalletProvider()),
@@ -93,59 +99,53 @@ class DayLitDriver extends StatelessWidget {
 }
 
 // ==================== 메인 앱 ====================
+// main.dart의 DayLitApp만 이렇게 수정하세요
 class DayLitApp extends StatelessWidget {
   const DayLitApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    _logInfo('Building main app with router');
+    return Consumer<AppState>(
+      builder: (context, appState, child) {
+        return MaterialApp.router(
+          title: 'DayLit',
+          debugShowCheckedModeBanner: false,
 
-    return MaterialApp.router(
-      // ==================== 앱 기본 설정 ====================
-      title: 'DayLit',
-      debugShowCheckedModeBanner: false,
+          // 테마 모드 설정
+          themeMode: appState.colorMode == 'system'
+              ? ThemeMode.system
+              : appState.isDarkMode
+              ? ThemeMode.dark
+              : ThemeMode.light,
 
-      // ==================== 테마 설정 ====================
-      // 라이트 테마 설정
-      theme: DaylitColors.getLightTheme(),
+          theme: DaylitColors.getLightTheme(),
+          darkTheme: DaylitColors.getDarkTheme(),
+          routerConfig: router,
 
-      // 다크 테마 설정
-      darkTheme: DaylitColors.getDarkTheme(),
-
-      // 시스템 테마 모드 따라가기
-      themeMode: ThemeMode.system,
-
-      // ==================== 라우터 설정 ====================
-      routerConfig: router,
-
-      // ==================== 기타 설정 ====================
-      // 머티리얼 앱 설정
-      builder: (context, child) {
-        // 전역 에러 처리나 추가 래퍼가 필요한 경우 여기에 추가
-        return _buildAppWrapper(context, child);
+          // 이 부분만 추가하면 됩니다!
+          builder: (context, child) {
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: appState.isDarkMode
+                  ? const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light,
+                statusBarBrightness: Brightness.dark, // iOS용
+                systemNavigationBarColor: Color(0xFF121212),
+                systemNavigationBarIconBrightness: Brightness.light,
+              )
+                  : const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light, // iOS용
+                systemNavigationBarColor: Colors.white,
+                systemNavigationBarIconBrightness: Brightness.dark,
+              ),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+        );
       },
     );
-  }
-
-  /// 앱 래퍼 빌드
-  ///
-  /// 전역적으로 적용해야 할 위젯들을 래핑합니다.
-  /// 예: 에러 바운더리, 로딩 오버레이, 네트워크 상태 등
-  Widget _buildAppWrapper(BuildContext context, Widget? child) {
-    if (child == null) {
-      return const SizedBox.shrink();
-    }
-
-    return MediaQuery(
-      // 시스템 폰트 크기 배율 고정 (접근성 고려시 제거 가능)
-      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
-      child: child,
-    );
-  }
-
-  /// 정보 로깅
-  void _logInfo(String message) {
-    debugPrint('📱 [DayLitApp] $message');
   }
 }
 

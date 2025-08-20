@@ -48,6 +48,16 @@ dependencies:
   #반응형
   flutter_screenutil:
   flutter_native_splash:
+
+  #로컬저장소
+  shared_preferences:
+
+  #앱 정보 불러오기
+  package_info_plus:
+
+  #인터넷 관련
+  url_launcher:
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

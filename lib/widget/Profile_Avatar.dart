@@ -15,25 +15,12 @@ class ProfileAvatar extends StatefulWidget {
 }
 
 class _ProfileAvatarState extends State<ProfileAvatar> {
-  late double size;
-  late bool isMobile;
-
-  @override
-  void initState() {
-    if(mounted){
-      isMobile = DaylitDevice.isMobile(context);
-      if(widget.size == null){
-        size = isMobile ? 33.r : 40.r;
-      }else{
-        size = widget.size!;
-      }
-    }
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context).daylitUser;
+    final isMobile = DaylitDevice.isMobile(context);
+    final size = widget.size ?? (isMobile ? 33.r : 40.r);
+
     return Container(
       width: size,
       height: size,
@@ -59,22 +46,23 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
         child: Image.network(
           user!.profileUrl!,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(user, context),
+          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(user, context, size),
         ),
       )
-          : _buildDefaultAvatar(user, context),
+          : _buildDefaultAvatar(user, context, size),
     );
   }
 
   /// 기본 아바타 (이름 이니셜)
-  Widget _buildDefaultAvatar(user, context) {
+  Widget _buildDefaultAvatar(user, BuildContext context, double size) {
+    final fontSize = size * 0.42;
     return Container(
       alignment: Alignment.center,
-      padding: EdgeInsetsGeometry.all(size > 60.r ? 12.r : 8.r),
-      child: FittedBox(
-        child: Text(
-          (user?.id?.isNotEmpty == true ? user!.id!.substring(0, 1).toUpperCase() : 'U'),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xffffffff))
+      child: Text(
+        (user?.id?.isNotEmpty == true ? user!.id!.substring(0, 1).toUpperCase() : 'U'),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontSize: fontSize,
+          color: const Color(0xffffffff),
         ),
       ),
     );

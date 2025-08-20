@@ -187,7 +187,7 @@ class ProfileCard extends StatelessWidget {
     return Row(
       children: [
         // 프로필 이미지
-        ProfileAvatar(),
+        ProfileAvatar(size: 63.r,),
 
         SizedBox(width: 16.w),
 
