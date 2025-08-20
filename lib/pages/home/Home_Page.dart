@@ -2,7 +2,7 @@ import 'package:daylit/pages/home/Home_Page_Mobile.dart';
 import 'package:daylit/pages/home/Home_Page_Tablet.dart';
 import 'package:daylit/provider/Router_Provider.dart';
 import 'package:daylit/provider/User_Provider.dart';
-import 'package:daylit/widget/Profile_Button.dart';
+import 'package:daylit/widget/Profile_Avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart' hide DeviceType;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
                   onTap: (){
                       routerProvider.pushTo(context, '/settings');
                   },
-                  child: ProfileButton(profileUrl: userProvider.daylitUser?.profileUrl, name: userProvider.daylitUser?.id)))
+                  child: ProfileAvatar()))
         ],
       ),
       body: ResponsiveLayoutExtensions.home(
