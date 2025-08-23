@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart' hide DeviceType;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../provider/Quest_Provider.dart';
 import '../../responsive/Responsive_Layout_Extensions.dart';
 import '../../util/Daylit_Device.dart';
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     userProvider = Provider.of<UserProvider>(context);
     questProvider = Provider.of<QuestProvider>(context);
     routerProvider = Provider.of<RouterProvider>(context);
+    final l10n = AppLocalizations.of(context); // 추가
     final theme = Theme.of(context);
     final isMobile = DaylitDevice.isMobile(context);
     return Scaffold(
@@ -56,12 +58,14 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton.extended(
           backgroundColor: theme.colorScheme.primary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(100)),
-          onPressed: (){},
+          onPressed: (){
+            routerProvider.pushTo(context, '/quest');
+          },
           label: Row(
             children: [
               Icon(LucideIcons.messageCirclePlus400, size: 22.r,),
               SizedBox(width: 8.w,),
-              Text('새 목표', style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onPrimary, fontSize: 16.sp, fontWeight: FontWeight.w700),)
+              Text(l10n?.newGoal ?? '', style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onPrimary, fontSize: 16.sp, fontWeight: FontWeight.w700),)
             ],
           )),
     );

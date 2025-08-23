@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../handler/Dialog_Handler.dart';
+import '../../l10n/app_localizations.dart';
 import '../../util/Daylit_Colors.dart';
 
 class SettingsPageMobile extends StatelessWidget {
@@ -14,6 +15,7 @@ class SettingsPageMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = DaylitColors.of(context);
+    final l10n = AppLocalizations.of(context)!; // 추가
 
     return Consumer<AppState>(
       builder: (context, appState, child) {
@@ -36,12 +38,12 @@ class SettingsPageMobile extends StatelessWidget {
                   _buildMenuSection(
                     context,
                     colors,
-                    '계정 & 결제',
+                    l10n.settingsAccountPayment,
                     [
                       _MenuItemData(
                         icon: LucideIcons.wallet,
-                        title: '릿 충전',
-                        subtitle: '릿을 충전하고 새로운 목표를 만들어보세요',
+                        title: l10n.litCharge,
+                        subtitle: l10n.litChargeDesc,
                         onTap: () {},
                         iconColor: DaylitColors.brandPrimary,
                       ),
@@ -54,11 +56,11 @@ class SettingsPageMobile extends StatelessWidget {
                   _buildMenuSection(
                     context,
                     colors,
-                    '앱 설정',
+                    l10n.settingsAppSettings,
                     [
                       _MenuItemData(
                         icon: LucideIcons.languages,
-                        title: '언어',
+                        title: l10n.language,
                         subtitle: appState.currentLanguageDisplayName, // 수정된 부분
                         onTap: () {
                           DialogHandler.showLanguageSheet(context: context); // 수정된 부분
@@ -66,16 +68,15 @@ class SettingsPageMobile extends StatelessWidget {
                       ),
                       _MenuItemData(
                         icon: LucideIcons.palette,
-                        title: '색상 모드',
-                        subtitle: _getColorModeDisplayName(appState.colorMode),
+                        title: l10n.colorMode,
+                        subtitle: _getColorModeDisplayName(context, appState.colorMode),
                         onTap: () {
                           DialogHandler.showColorModeSheet(context: context);
                         },
                       ),
                       _MenuItemData(
                         icon: LucideIcons.bellRing,
-                        title: '알림',
-                        subtitle: '푸시 알림 및 소리 설정',
+                        title: l10n.notifications,
                         onTap: () {},
                       ),
                     ],
@@ -87,32 +88,32 @@ class SettingsPageMobile extends StatelessWidget {
                   _buildMenuSection(
                     context,
                     colors,
-                    '정보 & 정책',
+                    l10n.settingsInfoPolicy,
                     [
                       _MenuItemData(
                         icon: LucideIcons.fileArchive,
-                        title: '이용약관',
+                        title: l10n.termsOfService,
                         onTap: () {},
                       ),
                       _MenuItemData(
                         icon: LucideIcons.shieldCheck,
-                        title: '개인정보처리방침',
+                        title: l10n.privacyPolicy,
                         onTap: () {},
                       ),
                       _MenuItemData(
                         icon: LucideIcons.scrollText,
-                        title: '이용정책',
+                        title: l10n.usagePolicy,
                         onTap: () {},
                       ),
                       _MenuItemData(
                         icon: LucideIcons.copyright,
-                        title: '라이선스',
+                        title: l10n.licenses,
                         onTap: () {},
                       ),
                       _MenuItemData(
                         icon: LucideIcons.badgeInfo,
-                        title: '버전 정보',
-                        subtitle: 'v1.0.0 (최신)',
+                        title: l10n.versionInfo,
+                        subtitle:'v${appState.version}',
                         onTap: () {},
                         showArrow: false,
                       ),
@@ -125,11 +126,11 @@ class SettingsPageMobile extends StatelessWidget {
                   _buildMenuSection(
                     context,
                     colors,
-                    '계정 관리',
+                    l10n.settingsAccountManagement,
                     [
                       _MenuItemData(
                         icon: LucideIcons.logOut,
-                        title: '로그아웃',
+                        title: l10n.logout,
                         onTap: () {},
                         iconColor: DaylitColors.error,
                         titleColor: DaylitColors.error,
@@ -281,29 +282,18 @@ class SettingsPageMobile extends StatelessWidget {
     );
   }
 
-  /// 색상 모드 표시명 반환
-  String _getColorModeDisplayName(String colorMode) {
+  /// 색상 모드 표시명 반환 (다국어 적용)
+  String _getColorModeDisplayName(BuildContext context, String colorMode) {
+    final l10n = AppLocalizations.of(context)!;
     switch (colorMode) {
       case 'system':
-        return '시스템 설정 따르기';
+        return l10n.systemMode;
       case 'light':
-        return '라이트 모드';
+        return l10n.lightMode;
       case 'dark':
-        return '다크 모드';
+        return l10n.darkMode;
       default:
-        return '시스템 설정 따르기';
-    }
-  }
-
-  /// 언어 표시명 반환
-  String _getLanguageDisplayName(String language) {
-    switch (language) {
-      case 'ko':
-        return '한국어';
-      case 'en':
-        return 'English';
-      default:
-        return '한국어';
+        return l10n.systemMode;
     }
   }
 }

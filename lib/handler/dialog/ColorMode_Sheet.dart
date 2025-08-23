@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../provider/App_State.dart';
 import '../../util/Daylit_Colors.dart';
 
@@ -13,6 +14,7 @@ class ColorModeSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = DaylitColors.of(context);
+    final l10n = AppLocalizations.of(context)!; // 추가
 
     return Container(
       width: double.infinity,
@@ -69,7 +71,7 @@ class ColorModeSheet extends StatelessWidget {
                     ),
                     SizedBox(width: 16.w),
                     Text(
-                      '색상 모드',
+                      l10n.colorModeTitle,
                       style: DaylitColors.heading3(color: colors.textPrimary).copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -90,8 +92,8 @@ class ColorModeSheet extends StatelessWidget {
                           appState: appState,
                           mode: 'system',
                           icon: LucideIcons.smartphone,
-                          title: '시스템 설정 따르기',
-                          subtitle: '기기의 설정을 따릅니다',
+                          title: l10n.systemMode,
+                          subtitle: l10n.systemModeDesc,
                         ),
 
                         SizedBox(height: 12.h),
@@ -102,8 +104,8 @@ class ColorModeSheet extends StatelessWidget {
                           appState: appState,
                           mode: 'light',
                           icon: LucideIcons.sun,
-                          title: '라이트 모드',
-                          subtitle: '밝은 테마로 고정됩니다',
+                          title: l10n.lightMode,
+                          subtitle: l10n.lightModeDesc,
                         ),
 
                         SizedBox(height: 12.h),
@@ -114,8 +116,8 @@ class ColorModeSheet extends StatelessWidget {
                           appState: appState,
                           mode: 'dark',
                           icon: LucideIcons.moon,
-                          title: '다크 모드',
-                          subtitle: '어두운 테마로 고정됩니다',
+                          title: l10n.darkMode,
+                          subtitle: l10n.darkModeDesc,
                         ),
                       ],
                     );
@@ -139,7 +141,7 @@ class ColorModeSheet extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      '완료',
+                      l10n.done,
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,

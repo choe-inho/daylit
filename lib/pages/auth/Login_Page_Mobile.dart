@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class LoginPageMobile extends StatefulWidget {
   const LoginPageMobile({super.key});
 
@@ -123,6 +125,7 @@ class _LoginPageMobileState extends State<LoginPageMobile>
 
   /// 상단 헤더 섹션
   Widget _buildHeaderSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // 추가
     return Column(
       children: [
         SizedBox(height: 150.h,),
@@ -133,7 +136,7 @@ class _LoginPageMobileState extends State<LoginPageMobile>
 
         // 메인 메시지
         Text(
-          '당신의 목표를 함께 시작해요',
+          l10n.loginTitle,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: DaylitColors.of(context).textPrimary,
@@ -145,7 +148,7 @@ class _LoginPageMobileState extends State<LoginPageMobile>
 
         // 서브 메시지
         Text(
-          '간편하게 로그인하고 더 나은 하루를 만들어보세요',
+          l10n.loginSubtitle,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: DaylitColors.of(context).textSecondary,
             height: 1.4,
@@ -288,7 +291,7 @@ class _LoginPageMobileState extends State<LoginPageMobile>
   /// 기존 소셜 버튼 (로딩 상태만 추가)
   Widget _socialBtn(Social social, BuildContext context) {
     final isLoading = _isLoading && _loadingSocial == social;
-
+    final l10n = AppLocalizations.of(context)!; // 추가
     return InkWell(
       customBorder: const CircleBorder(),
       onTap: isLoading ? null : () => _handleSocialLogin(social),
@@ -331,7 +334,7 @@ class _LoginPageMobileState extends State<LoginPageMobile>
                     ),
                   )
                       : Text(
-                    '${social.displayName}로 시작하기',
+                    l10n.continueWith(getSocialDisplayName(social, l10n)),
                     style: TextStyle(
                       fontSize: 13.sp,
                       color: social.onColor,
@@ -343,5 +346,14 @@ class _LoginPageMobileState extends State<LoginPageMobile>
         ),
       ),
     );
+  }
+
+  String getSocialDisplayName(Social social, l10n){
+    switch (social){
+      case Social.kakao : return l10n.kakao;
+      case Social.google : return l10n.google;
+      case Social.apple : return l10n.apple;
+      case Social.discord : return l10n.discord;
+    }
   }
 }

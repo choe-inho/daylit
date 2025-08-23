@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -110,23 +110,22 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// 언어 정보 확인 (기존 함수 개선)
   Future<void> _checkLanguage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedLanguage = prefs.getString(languageKey);
 
       if (savedLanguage == null) {
-        // TODO: 시스템 언어 감지 로직
-        // import 'dart:ui' as ui;
-        // final systemLocale = ui.window.locale.languageCode;
-        // _language = _getSupportedLanguage(systemLocale);
-        _language = 'ko'; // 임시로 한국어 설정
+        // 새로운 방법: PlatformDispatcher 사용
+        final systemLocale = ui.PlatformDispatcher.instance.locale.languageCode;
+        _language = _getSupportedLanguage(systemLocale);
+
+        _logInfo('시스템 언어 감지: $systemLocale → $_language');
       } else {
         _language = savedLanguage;
+        _logInfo('저장된 언어 설정: $_language');
       }
 
-      _logInfo('언어 설정: $_language');
       await Future.delayed(const Duration(milliseconds: 200));
     } catch (e) {
       _language = 'ko'; // 기본값으로 설정
@@ -134,10 +133,24 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// 지원하는 언어인지 확인
+
   String _getSupportedLanguage(String languageCode) {
-    const supportedLanguages = ['ko', 'en', 'ja', 'zh'];
-    return supportedLanguages.contains(languageCode) ? languageCode : 'ko';
+    const supportedLanguages = ['ko', 'en'];
+
+    // 지원하는 언어인지 확인
+    if (supportedLanguages.contains(languageCode)) {
+      return languageCode;
+    }
+
+    // 지원하지 않는 언어인 경우 기본값 반환
+    // 한국/일본/중국어권은 한국어, 나머지는 영어
+    switch (languageCode) {
+      case 'ja': // 일본어
+      case 'zh': // 중국어
+        return 'ko';
+      default:
+        return 'en';
+    }
   }
 
   /// 언어 변경 (기존 함수 개선)
@@ -161,12 +174,8 @@ class AppState extends ChangeNotifier {
         return '한국어';
       case 'en':
         return 'English';
-      case 'ja':
-        return '日本語';
-      case 'zh':
-        return '中文';
       default:
-        return '한국어';
+        return 'English';
     }
   }
 

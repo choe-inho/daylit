@@ -3,6 +3,7 @@ import 'package:daylit/provider/Quest_Provider.dart';
 import 'package:daylit/provider/Router_Provider.dart';
 import 'package:daylit/provider/User_Provider.dart';
 import 'package:daylit/routes/App_Routes.dart';
+import 'package:daylit/service/Localization_Service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import 'package:daylit/util/Daylit_Device.dart';
 import 'package:provider/provider.dart';
 
 import 'handler/Backpress_Handler.dart';
+import 'l10n/app_localizations.dart';
 
 // ==================== 앱 시작점 ====================
 /// 앱의 메인 엔트리포인트
@@ -110,6 +112,10 @@ class DayLitApp extends StatelessWidget {
         return MaterialApp.router(
           title: 'DayLit',
           debugShowCheckedModeBanner: false,
+
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: LocalizationService.supportedLocales,
+          locale: LocalizationService.getLocaleFromLanguageCode(appState.language),
 
           // 테마 모드 설정
           themeMode: appState.colorMode == 'system'

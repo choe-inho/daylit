@@ -2,16 +2,16 @@ import 'package:daylit/model/Wallet_Model.dart';
 import 'package:daylit/provider/User_Provider.dart';
 import 'package:daylit/util/Daylit_Colors.dart';
 import 'package:daylit/util/Daylit_Device.dart';
-import 'package:daylit/util/Daylit_Social.dart';
 import 'package:daylit/widget/Profile_Avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
+
 class ProfileCard extends StatelessWidget {
   final WalletModel? wallet;
   final VoidCallback? onTap;
-
   const ProfileCard({
     super.key,
     this.wallet,
@@ -184,6 +184,7 @@ class ProfileCard extends StatelessWidget {
 
   /// 프로필 헤더 (이미지, 이름, 레벨)
   Widget _buildProfileHeader(BuildContext context, dynamic colors, user) {
+    final l10n = AppLocalizations.of(context)!; // 추가
     return Row(
       children: [
         // 프로필 이미지
@@ -198,7 +199,7 @@ class ProfileCard extends StatelessWidget {
             children: [
               // 사용자 이름
               Text(
-                user?.id ?? '사용자',
+                user?.id ?? l10n.none,
                 style: DaylitColors.heading3(color: colors.textPrimary).copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -259,6 +260,7 @@ class ProfileCard extends StatelessWidget {
 
   /// 사용자 정보 섹션
   Widget _buildUserInfoSection(BuildContext context, dynamic colors, user) {
+    final l10n = AppLocalizations.of(context)!; // 추가
     return Column(
       children: [
         // 이메일
@@ -266,8 +268,8 @@ class ProfileCard extends StatelessWidget {
           context,
           colors,
           Icons.email_outlined,
-          '이메일',
-          user?.email ?? '이메일 없음',
+          l10n.email,
+          user?.email ?? l10n.none,
         ),
 
         SizedBox(height: 12.h),
@@ -277,8 +279,8 @@ class ProfileCard extends StatelessWidget {
           context,
           colors,
           user?.gender == 'male' ? Icons.man : user?.gender == 'female' ? Icons.woman : Icons.person_outline,
-          '성별',
-          _getGenderText(user?.gender),
+          l10n.gender,
+          _getGenderText(user?.gender, l10n),
         ),
 
         SizedBox(height: 12.h),
@@ -288,8 +290,8 @@ class ProfileCard extends StatelessWidget {
           context,
           colors,
           Icons.calendar_today_outlined,
-          '가입일',
-          _getJoinDateText(user?.createAt),
+          l10n.regDate,
+          _getJoinDateText(user?.createAt, l10n),
         ),
       ],
     );
@@ -446,34 +448,20 @@ class ProfileCard extends StatelessWidget {
   }
 
   /// 성별 텍스트 변환
-  String _getGenderText(String? gender) {
+  String _getGenderText(String? gender , l10n) {
     switch (gender) {
       case 'male':
-        return '남성';
+        return l10n.male;
       case 'female':
-        return '여성';
+        return l10n.female;
       default:
-        return '미설정';
+        return l10n.none;
     }
   }
 
   /// 가입일 텍스트 변환
-  String _getJoinDateText(DateTime? createAt) {
-    if (createAt == null) return '정보 없음';
-
-    final now = DateTime.now();
-    final difference = now.difference(createAt).inDays;
-
-    if (difference == 0) {
-      return '오늘';
-    } else if (difference < 7) {
-      return '$difference일 전';
-    } else if (difference < 30) {
-      return '${(difference / 7).floor()}주 전';
-    } else if (difference < 365) {
-      return '${(difference / 30).floor()}개월 전';
-    } else {
-      return '${createAt.year}.${createAt.month.toString().padLeft(2, '0')}.${createAt.day.toString().padLeft(2, '0')}';
-    }
+  String _getJoinDateText(DateTime? createAt, l10n) {
+    if (createAt == null) return l10n.none;
+    return '${createAt.year}.${createAt.month.toString().padLeft(2, '0')}.${createAt.day.toString().padLeft(2, '0')}';
   }
 }

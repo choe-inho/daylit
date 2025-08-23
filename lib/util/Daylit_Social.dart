@@ -22,18 +22,6 @@ enum Social {
     }
   }
 
-  String get displayName {
-    switch (this) {
-      case Social.kakao:
-        return '카카오';
-      case Social.google:
-        return '구글';
-      case Social.apple:
-        return '애플';
-      case Social.discord:
-        return '디스코드';
-    }
-  }
 
   Color get mainColor{
     switch (this) {

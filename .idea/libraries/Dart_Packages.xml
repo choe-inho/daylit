@@ -142,6 +142,13 @@
             </list>
           </value>
         </entry>
+        <entry key="flutter_localizations">
+          <value>
+            <list>
+              <option value="$PROJECT_DIR$/../flutter/packages/flutter_localizations/lib" />
+            </list>
+          </value>
+        </entry>
         <entry key="flutter_native_splash">
           <value>
             <list>
@@ -223,6 +230,13 @@
           <value>
             <list>
               <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/image-4.5.4/lib" />
+            </list>
+          </value>
+        </entry>
+        <entry key="intl">
+          <value>
+            <list>
+              <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/intl-0.20.2/lib" />
             </list>
           </value>
         </entry>
@@ -727,6 +741,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/http-1.4.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/http_parser-4.1.2/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/image-4.5.4/lib" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/intl-0.20.2/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/jwt_decode-0.3.1/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/leak_tracker-10.0.9/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/leak_tracker_flutter_testing-3.0.9/lib" />
@@ -795,6 +810,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/yet_another_json_isolate-2.1.0/lib" />
       <root url="file://$PROJECT_DIR$/../flutter/bin/cache/pkg/sky_engine/lib" />
       <root url="file://$PROJECT_DIR$/../flutter/packages/flutter/lib" />
+      <root url="file://$PROJECT_DIR$/../flutter/packages/flutter_localizations/lib" />
       <root url="file://$PROJECT_DIR$/../flutter/packages/flutter_test/lib" />
       <root url="file://$PROJECT_DIR$/../flutter/packages/flutter_web_plugins/lib" />
     </CLASSES>

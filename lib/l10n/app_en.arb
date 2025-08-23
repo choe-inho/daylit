@@ -1,0 +1,76 @@
+{
+  "@@locale": "en",
+
+  "appName": "DayLit",
+  "@appName": {
+    "description": "The application name"
+  },
+
+  "home": "Home",
+  "settings": "Settings",
+  "profile": "Profile",
+  "quest": "Quest",
+
+  "loginTitle": "Start your goals with us",
+  "loginSubtitle": "Log in easily and create a better day",
+  "kakao" : "KAKAO",
+  "google" : "GOOGLE",
+  "apple" : "APPLE",
+  "discord" : "DISCORD",
+  "continueWith": "Continue with {provider}",
+  "@continueWith": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+
+  "settingsAccountPayment": "Account & Payment",
+  "settingsAppSettings": "App Settings",
+  "settingsInfoPolicy": "Info & Policy",
+  "settingsAccountManagement": "Account Management",
+
+  "litCharge": "Charge Lit",
+  "litChargeDesc": "Charge Lit to use more features",
+  "language": "Language",
+  "colorMode": "Color Mode",
+  "notifications": "Notifications",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
+  "usagePolicy": "Usage Policy",
+  "licenses": "Licenses",
+  "versionInfo": "Version Info",
+  "logout": "Logout",
+
+  "colorModeTitle": "Color Mode",
+  "colorModeDesc": "Choose your app's color theme",
+  "systemMode": "Follow System Settings",
+  "systemModeDesc": "Automatically changes according to device settings",
+  "lightMode": "Light Mode",
+  "lightModeDesc": "Fixed to bright theme",
+  "darkMode": "Dark Mode",
+  "darkModeDesc": "Fixed to dark theme",
+
+  "languageTitle": "Language Settings",
+  "languageDesc": "Choose the language to use in the app",
+  "languageChanged": "Language has been changed",
+
+  "done": "Done",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "later": "Later",
+  "update": "Update",
+  "loading": "Loading...",
+
+  "emptyQuestTitle": "What goal would you like\nto set and pursue?",
+  "newGoal": "New Goal",
+
+  "email" : "E-mail",
+  "gender" : "Gender",
+  "male" : "Male",
+  "female" : "Female",
+  "regDate" : "Join Date",
+
+  "none" : "Unknown"
+}

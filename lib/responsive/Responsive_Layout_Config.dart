@@ -15,6 +15,9 @@ enum PageLayoutType {
   /// 리스트 페이지 (퀘스트, 루틴 목록 등)
   list,
 
+  /// 퀘스트 만들기
+  quest,
+
   /// 상세 페이지 (루틴 상세, 프로필 등)
   detail,
 
@@ -139,6 +142,14 @@ class ResponsiveLayoutConfig {
           brandingTitle: '설정',
           brandingSubtitle: '앱을 개인화하고\n환경을 설정해보세요.',
           brandingIcon: Icons.settings_rounded,
+        );
+
+      case PageLayoutType.quest:
+        return const ResponsiveLayoutConfig(
+          useCard: false,
+          showBrandingPattern: false,
+          brandingTitle: '퀘스트 생성',
+          brandingSubtitle: '목표를 설정하고 퀘스트를 생성하세요.',
         );
 
       case PageLayoutType.onboarding:

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../provider/App_State.dart';
 import '../../util/Daylit_Colors.dart';
 
@@ -13,6 +14,7 @@ class LanguageSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = DaylitColors.of(context);
+    final l10n = AppLocalizations.of(context)!; // 추가
 
     return Container(
       width: double.infinity,
@@ -69,7 +71,7 @@ class LanguageSheet extends StatelessWidget {
                     ),
                     SizedBox(width: 16.w),
                     Text(
-                      '언어 설정',
+                      l10n.languageTitle,
                       style: DaylitColors.heading3(color: colors.textPrimary).copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -106,8 +108,7 @@ class LanguageSheet extends StatelessWidget {
                           subtitle: '영어',
                         ),
 
-                        SizedBox(height: 12.h),
-
+                      /*  SizedBox(height: 12.h),
                         _buildLanguageOption(
                           context: context,
                           colors: colors,
@@ -128,7 +129,7 @@ class LanguageSheet extends StatelessWidget {
                           flag: '🇨🇳',
                           title: '中文',
                           subtitle: '중국어',
-                        ),
+                        ),*/
                       ],
                     );
                   },
@@ -151,7 +152,7 @@ class LanguageSheet extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      '완료',
+                      l10n.done,
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -183,9 +184,6 @@ class LanguageSheet extends StatelessWidget {
       onTap: () async {
         if (!isSelected) {
           await appState.changeLanguage(languageCode);
-
-          // 성공 피드백
-          _showLanguageChangedFeedback(context);
         }
       },
       borderRadius: BorderRadius.circular(12.r),
@@ -275,37 +273,6 @@ class LanguageSheet extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  void _showLanguageChangedFeedback(BuildContext context) {
-    // 간단한 성공 피드백
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              LucideIcons.check,
-              color: Colors.white,
-              size: 20.r,
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              '언어가 변경되었습니다',
-              style: TextStyle(
-                fontFamily: 'pre',
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: DaylitColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        duration: const Duration(seconds: 2),
       ),
     );
   }
