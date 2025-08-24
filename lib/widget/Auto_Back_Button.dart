@@ -17,7 +17,7 @@ class AutoBackButton extends StatelessWidget {
       padding: EdgeInsetsGeometry.symmetric(horizontal: isMobile ? 8.r : 12.r),
       child: IconButton(onPressed: (){
           routerProvider.goBack(context);
-      }, icon: Icon(LucideIcons.chevronLeft, color: Theme.of(context).colorScheme.shadow), iconSize: isMobile ? 24.r : 36.r),
+      }, icon: Icon(LucideIcons.chevronLeft, color: Theme.of(context).dividerColor), iconSize: isMobile ? 24.r : 36.r),
     );
   }
 }

@@ -5,7 +5,8 @@ import '../../util/Routine_Utils.dart';
 class QuestModel {
   final String qid;                    // 루틴 ID
   final String uid;                 // 사용자 ID
-  final String purpose;                // 목적 (100자 제한)
+  final String purpose;                // 목적 (200자 제한)
+  final String constraints;            // 제약상항 (100자 제한)
   final int totalDays;                 // 총 루틴 일수
   final int totalCost;                 // 총 비용 (릿)
   final RoutineStatus status;          // 루틴 상태
@@ -19,6 +20,7 @@ class QuestModel {
     required this.qid,
     required this.uid,
     required this.purpose,
+    required this.constraints,
     required this.totalDays,
     required this.totalCost,
     required this.status,
@@ -33,6 +35,7 @@ class QuestModel {
   factory QuestModel.createForAI({
     required String uid,
     required String purpose,
+    required String constraints,
     required int totalDays,
     required DateTime startDate,
     Map<String, dynamic>? aiRequestData,
@@ -44,6 +47,7 @@ class QuestModel {
       qid: 'quest_${now.millisecondsSinceEpoch}_$uid',
       uid: uid,
       purpose: purpose,
+      constraints: constraints,
       totalDays: totalDays,
       totalCost: cost,
       status: RoutineStatus.creating, // AI 생성 중
@@ -60,6 +64,7 @@ class QuestModel {
       qid: json['qid'] ?? '',
       uid: json['uid'] ?? '',
       purpose: json['purpose'] ?? '',
+      constraints: json['constraints'] ?? '',
       totalDays: json['total_days'] ?? 0,
       totalCost: json['total_cost'] ?? 0,
       status: toRoutineStatus(json['status']),
@@ -67,7 +72,7 @@ class QuestModel {
       endDate: DateTimeUtils.fromUtcString(json['end_date']) ?? DateTime.now(),
       createdAt: DateTimeUtils.fromUtcString(json['created_at']) ?? DateTime.now(),
       completedAt: DateTimeUtils.fromUtcString(json['completed_at']),
-      aiRequestData: json['ai_request_data'],
+      aiRequestData: json['ai_request_data']
     );
   }
 
@@ -77,6 +82,7 @@ class QuestModel {
       'qid': qid,
       'uid': uid,
       'purpose': purpose,
+      'constraints' : constraints,
       'total_days': totalDays,
       'total_cost': totalCost,
       'status': status.value,
@@ -93,6 +99,7 @@ class QuestModel {
     String? qid,
     String? uid,
     String? purpose,
+    String? constraints,
     int? totalDays,
     int? totalCost,
     RoutineStatus? status,
@@ -106,6 +113,7 @@ class QuestModel {
       qid: qid ?? this.qid,
       uid: uid ?? this.uid,
       purpose: purpose ?? this.purpose,
+      constraints: constraints ?? this.constraints,
       totalDays: totalDays ?? this.totalDays,
       totalCost: totalCost ?? this.totalCost,
       status: status ?? this.status,

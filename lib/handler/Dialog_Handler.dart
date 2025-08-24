@@ -1,6 +1,11 @@
 import 'package:daylit/handler/dialog/Confirm_Dialog.dart';
 import 'package:daylit/handler/dialog/Content_Sheet.dart';
+import 'package:daylit/handler/dialog/Warning_Dialog.dart';
+import 'package:daylit/l10n/app_localizations.dart';
+import 'package:daylit/util/Daylit_Colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'dialog/ColorMode_Sheet.dart';
 import 'dialog/Language_Sheet.dart';
@@ -92,6 +97,23 @@ class DialogHandler{
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const LanguageSheet(),
+    );
+  }
+
+// DialogHandler에 추가
+  static Future<void> showWarning({
+    required BuildContext context,
+    String? title,
+    required String message,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => WarningDialog(
+        title: title,
+        subTitle: message,
+      ),
     );
   }
 }

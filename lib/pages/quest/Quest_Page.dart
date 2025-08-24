@@ -26,7 +26,7 @@ class QuestPage extends StatelessWidget {
           body: ChangeNotifierProvider(
               create: (_)=> QuestCreateProvider(),
             builder: (context, child){
-                final provider = Provider.of<QuestCreateProvider>(context);
+              final provider = Provider.of<QuestCreateProvider>(context);
               return ResponsiveLayoutExtensions.quest(
                   mobileLayout: QuestPageMobile(provider: provider,),
                   tabletLayout: QuestPageTablet()

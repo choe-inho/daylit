@@ -9,6 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 /// - 라이트/다크 테마 컬러
 /// - 상태 컬러 (성공, 경고, 에러 등)
 /// - 텍스트 스타일 및 테마 데이터
+/// - 다양한 그라데이션 (브랜드, 상태별, 비활성)
 class DaylitColors {
   // Private 생성자 - 인스턴스 생성 방지
   DaylitColors._();
@@ -54,6 +55,20 @@ class DaylitColors {
   static dynamic of(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return brightness == Brightness.light ? light : dark;
+  }
+
+  /// 현재 테마에 맞는 비활성 그라데이션 반환
+  ///
+  /// @param context BuildContext (테마 모드 확인용)
+  /// @param soft 부드러운 버전 사용 여부 (기본값: false)
+  /// @returns 현재 테마의 비활성 그라데이션
+  static LinearGradient getDisabledGradient(BuildContext context, {bool soft = false}) {
+    final brightness = Theme.of(context).brightness;
+    if (soft) {
+      return brightness == Brightness.light ? softDisabledGradient : softDisabledGradientDark;
+    } else {
+      return brightness == Brightness.light ? disabledGradient : disabledGradientDark;
+    }
   }
 
   /// 상태별 컬러 반환 (테마 고려)
@@ -172,6 +187,64 @@ class DaylitColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [warning, warningDark],
+  );
+
+  /// 에러 그라데이션
+  static const LinearGradient errorGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [error, errorDark],
+  );
+
+  /// 정보 그라데이션
+  static const LinearGradient infoGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [info, infoDark],
+  );
+
+  /// 비활성 그라데이션 (라이트 테마용)
+  static const LinearGradient disabledGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFE5E7EB), // 밝은 회색
+      Color(0xFFD1D5DB), // 중간 회색
+      Color(0xFFA1A5AB), // 어두운 회색
+    ],
+  );
+
+  /// 비활성 그라데이션 (다크 테마용)
+  static const LinearGradient disabledGradientDark = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF4B5563), // 밝은 다크 회색
+      Color(0xFF374151), // 중간 다크 회색
+      Color(0xFF1F2937), // 어두운 다크 회색
+    ],
+  );
+
+  /// 부드러운 비활성 그라데이션 (더 연한 버전)
+  static const LinearGradient softDisabledGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFF9FAFB), // 매우 밝은 회색
+      Color(0xFFF3F4F6), // 밝은 회색
+      Color(0xFFE5E7EB), // 중간 회색
+    ],
+  );
+
+  /// 부드러운 비활성 그라데이션 다크 버전
+  static const LinearGradient softDisabledGradientDark = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF374151), // 밝은 다크 회색
+      Color(0xFF1F2937), // 중간 다크 회색
+      Color(0xFF111827), // 어두운 다크 회색
+    ],
   );
 
   // ==================== Flutter 테마 데이터 ====================
@@ -398,6 +471,19 @@ extension DaylitColorsExtension on BuildContext {
   Color get warningColor => DaylitColors.warning;
   Color get errorColor => DaylitColors.error;
   Color get infoColor => DaylitColors.info;
+
+  /// 그라데이션들 빠른 접근
+  LinearGradient get brandGradient => DaylitColors.brandGradient;
+  LinearGradient get successGradient => DaylitColors.successGradient;
+  LinearGradient get warningGradient => DaylitColors.warningGradient;
+  LinearGradient get errorGradient => DaylitColors.errorGradient;
+  LinearGradient get infoGradient => DaylitColors.infoGradient;
+
+  /// 현재 테마에 맞는 비활성 그라데이션 반환
+  LinearGradient get disabledGradient => DaylitColors.getDisabledGradient(this);
+
+  /// 현재 테마에 맞는 부드러운 비활성 그라데이션 반환
+  LinearGradient get softDisabledGradient => DaylitColors.getDisabledGradient(this, soft: true);
 }
 
 // ==================== 컬러 유틸리티 ====================
@@ -448,43 +534,3 @@ class ColorUtils {
     return isLightColor(backgroundColor) ? Colors.black : Colors.white;
   }
 }
-
-// ==================== 사용 예시 ====================
-/*
-// 기본 사용법
-final colors = DaylitColors.of(context);
-Container(
-  color: colors.surface,
-  child: Text(
-    'Hello World',
-    style: DaylitColors.bodyLarge(color: colors.textPrimary),
-  ),
-);
-
-// Extension 사용법
-Container(
-  color: context.colors.surface,
-  child: Text(
-    'Hello World',
-    style: DaylitColors.bodyLarge(color: context.colors.textPrimary),
-  ),
-);
-
-// 브랜드 컬러 사용
-Container(
-  decoration: BoxDecoration(
-    gradient: DaylitColors.brandGradient,
-    borderRadius: BorderRadius.circular(12.r),
-  ),
-);
-
-// 상태 컬러 사용
-Icon(
-  Icons.check,
-  color: DaylitColors.success,
-);
-
-// 컬러 유틸리티 사용
-final hexColor = ColorUtils.toHex(DaylitColors.brandPrimary);
-final colorFromHex = ColorUtils.fromHex('#6BB6FF');
-*/
