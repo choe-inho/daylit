@@ -1,62 +1,90 @@
-import 'package:daylit/handler/Dialog_Handler.dart';
-import 'package:daylit/handler/Picker_Handler.dart';
 import 'package:daylit/l10n/app_localizations.dart';
 import 'package:daylit/provider/Quest_Create_Provider.dart';
-import 'package:daylit/routes/App_Routes.dart';
 import 'package:daylit/util/Daylit_Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-class QuestPageMobile extends StatelessWidget {
+// AI 로딩 오버레이 임포트 (실제 파일 경로에 맞게 수정)
+import '../../handler/Dialog_Handler.dart';
+import '../../handler/Picker_Handler.dart';
+import '../single/Quest_AI_Loading_Overlay.dart';
+
+class QuestPageMobile extends StatefulWidget {
   const QuestPageMobile({super.key, required this.provider});
   final QuestCreateProvider provider;
 
   @override
+  State<QuestPageMobile> createState() => _QuestPageMobileState();
+}
+
+class _QuestPageMobileState extends State<QuestPageMobile> {
+  // 텍스트 컨트롤러 추가
+  late TextEditingController _purposeController;
+  // 텍스트 컨트롤러 추가
+  late TextEditingController _constraintsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _purposeController = TextEditingController(text: widget.provider.purpose);
+    _constraintsController = TextEditingController(text: widget.provider.constraints);
+  }
+
+  @override
+  void dispose() {
+    _purposeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final theme =  Theme.of(context);
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final provider = widget.provider;
+
     return Column(
       children: [
         Expanded(
           child: CustomScrollView(
             slivers: [
-              _infoText('어떤 목표를 세워볼까요? (최소 20자)', context),
+              _infoText('어떤 목표를 세워볼까요?', '최소 20자 이상 작성해주세요',context),
               SliverToBoxAdapter(
                 child: TextField(
-                  onChanged: (value){
-                    provider.setPurpose(value);
-                  },
+                  controller: _purposeController,
                   maxLines: null,
                   style: theme.textTheme.bodyMedium,
+                  onChanged: (value) {
+                    // provider에 목표 텍스트 업데이트
+                    provider.setPurpose(value);
+                  },
                   decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide(
-                            color: theme.colorScheme.shadow.withValues(alpha: 0.2)
+                            color: theme.dividerColor.withValues(alpha: 0.3)
                         ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                            color: theme.colorScheme.primary
-                        )
-                    ),
-                    hintText: '목표를 자세하게 얘기해주시면 더 맞춤화된 계획을 짤 수 있어요\n\n예시) 내 키가 160cm, 몸무게가 60KG인데 체지방 감량과 근력 증가를 목표로 다이어트를 하고싶어',
-                    hintStyle: theme.textTheme.bodySmall
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.primary
+                          )
+                      ),
+                      hintText: '목표를 자세하게 얘기해주시면 더 맞춤화된 계획을 짤 수 있어요\n\n예시) 내 키가 160cm, 몸무게가 60KG인데 체지방 감량과 근력 증가를 목표로 다이어트를 하고싶어',
+                      hintStyle: theme.textTheme.bodySmall
                   ),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: 12.h,),
-              ),
-              _infoText('퀘스트를 몇일로 진행활까요? (7-365 일)', context),
+              SliverPadding(padding: EdgeInsetsGeometry.only(top: 12.h)),
+              _infoText('퀘스트를 몇일로 진행할까요?', '7 - 365일까지 생성이 가능해요',context),
               SliverToBoxAdapter(
                 child: Row(
                   children: [
                     Flexible(
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap: ()=> provider.setAutoEndDate(true),
+                        onTap: () => provider.setAutoEndDate(true),
                         child: Container(
                           height: 42.h,
                           decoration: BoxDecoration(
@@ -69,7 +97,7 @@ class QuestPageMobile extends StatelessWidget {
                           ),
                           alignment: Alignment.center,
                           child: Text('자동설정', style: theme.textTheme.bodyMedium?.copyWith(
-                            color: provider.autoEndDate ? theme.colorScheme.onPrimary : theme.dividerColor
+                              color: provider.autoEndDate ? theme.colorScheme.onPrimary : theme.dividerColor
                           ),),
                         ),
                       ),
@@ -107,8 +135,8 @@ class QuestPageMobile extends StatelessWidget {
                           padding: EdgeInsetsGeometry.symmetric(horizontal: 24.w),
                           child:
                           provider.autoEndDate == true ?
-                           Text('직접설정', style: theme.textTheme.bodyMedium,)
-                          : Text('${provider.totalDate}일 ', style: theme.textTheme.bodyMedium?.copyWith(
+                          Text('직접설정', style: theme.textTheme.bodyMedium,)
+                              : Text('${provider.totalDate}일 ', style: theme.textTheme.bodyMedium?.copyWith(
                               color: !provider.autoEndDate ? theme.colorScheme.onPrimary : theme.dividerColor
                           ),),
                         ),
@@ -117,22 +145,22 @@ class QuestPageMobile extends StatelessWidget {
                   ],
                 ),
               ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: 12.h,),
-              ),
-              _infoText('추가해야할 제약사항이 있나요? (선택)', context),
+              SliverPadding(padding: EdgeInsetsGeometry.only(top: 12.h)),
+              _infoText('제한되는 사항이있나요?', '해당 내용은 선택사항입니다',context),
               SliverToBoxAdapter(
                 child: TextField(
-                  onChanged: (value){
-                    provider.setConstraints(value);
-                  },
+                  controller: _constraintsController,
                   maxLines: null,
                   style: theme.textTheme.bodyMedium,
+                  onChanged: (value) {
+                    // provider에 목표 텍스트 업데이트
+                    provider.setPurpose(value);
+                  },
                   decoration: InputDecoration(
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide(
-                            color: theme.colorScheme.shadow.withValues(alpha: 0.2)
+                            color: theme.dividerColor.withValues(alpha: 0.3)
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -141,7 +169,7 @@ class QuestPageMobile extends StatelessWidget {
                               color: theme.colorScheme.primary
                           )
                       ),
-                      hintText: '제약 사항을 추가하면 더 상황에 맞게 계획을 짤 수 있어요\n\n예시) 집에서만 운동 할 수있고, 아파트라 시끄러운 운동은 불가능해',
+                      hintText: '장소적 제한, 시간적 제한 등을 입력해주시면 더 정확하게 계획을 짤게요.\n\n예시) 밤에 할 수 있고 여유시간이 2시간 정도 밖에없고 아파트라 쿵쿵 거릴 수 없어',
                       hintStyle: theme.textTheme.bodySmall
                   ),
                 ),
@@ -149,27 +177,53 @@ class QuestPageMobile extends StatelessWidget {
             ],
           ),
         ),
-        Padding(padding: EdgeInsetsGeometry.only(bottom: 24.h, top: 12.h),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(15),
-            onTap: () async{
-              if(provider.purpose.length >= 20){
 
-              }
+        // 완료 버튼 (AI 로딩 오버레이 연결)
+        Padding(
+          padding: EdgeInsetsGeometry.only(bottom: 24.h, top: 12.h),
+          child: InkWell(
+            onTap: () async {
+              // AI 퀘스트 생성 시작
+              await QuestAIGenerationHelper.startGeneration(
+                context: context,
+                provider: provider,
+              );
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+            borderRadius: BorderRadius.circular(15),
+            child: Container(
               height: 46.h,
               decoration: BoxDecoration(
-                borderRadius: BorderRadiusGeometry.circular(15),
-                gradient: provider.purpose.length >= 20 ? DaylitColors.brandGradient : null,
-                color: provider.purpose.length < 20 ? theme.dividerColor.withValues(alpha: 0.1) : null,
-                border: provider.purpose.length < 20 ? Border.all(
-                  color:  theme.dividerColor.withValues(alpha: 0.3)
-                ) : null
+                  borderRadius: BorderRadius.circular(15),
+                  gradient: provider.purpose.length >= 10 ? DaylitColors.brandGradient : null,
+                  color: provider.purpose.length < 10 ? theme.dividerColor.withValues(alpha: 0.1) : null,
+                  border: provider.purpose.length < 10 ? Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.3)
+                  ) : null
               ),
               alignment: Alignment.center,
-              child: Text(l10n.done, style: theme.textTheme.titleMedium?.copyWith(color:  provider.purpose.length > 20 ? const Color(0xffffffff) : const Color(0xff8d8d8d)),),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // AI 아이콘 추가
+                  if (provider.purpose.length >= 10) ...[
+                    Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 20.r,
+                    ),
+                    SizedBox(width: 8.w),
+                  ],
+                  Text(
+                    l10n.done,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: provider.purpose.length >= 10
+                          ? const Color(0xffffffff)
+                          : const Color(0xff8d8d8d),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         )
@@ -177,10 +231,25 @@ class QuestPageMobile extends StatelessWidget {
     );
   }
 
-  Widget _infoText(String text, context){
+  Widget _infoText(String text, String? subTitle, context){
     return SliverToBoxAdapter(child:
     Padding(
         padding: EdgeInsetsGeometry.only(top: 12.h, bottom: 6.h),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))));
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(text, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+            if(subTitle != null)...[
+              SizedBox(height: 2.h,),
+              Row(
+                children: [
+                  Icon(LucideIcons.circleAlert, size: 14.r, color: Theme.of(context).dividerColor.withValues(alpha: 0.8),),
+                  SizedBox(width: 4.w,),
+                  Text(subTitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w400, color: Theme.of(context).dividerColor.withValues(alpha: 0.8))),
+                ],
+              ),
+            ]
+          ],
+        )));
   }
 }

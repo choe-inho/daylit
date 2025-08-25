@@ -14,6 +14,7 @@ class QuestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final provider = Provider.of<QuestCreateProvider>(context);
     return GestureDetector(
       onTap: ()=> FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -23,15 +24,9 @@ class QuestPage extends StatelessWidget {
             backgroundColor: theme.scaffoldBackgroundColor,
             title: Text(l10n.quest, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),),
           ),
-          body: ChangeNotifierProvider(
-              create: (_)=> QuestCreateProvider(),
-            builder: (context, child){
-              final provider = Provider.of<QuestCreateProvider>(context);
-              return ResponsiveLayoutExtensions.quest(
-                  mobileLayout: QuestPageMobile(provider: provider,),
-                  tabletLayout: QuestPageTablet()
-              );
-            },
+          body: ResponsiveLayoutExtensions.quest(
+              mobileLayout: QuestPageMobile(provider: provider,),
+              tabletLayout: QuestPageTablet()
           )
       ),
     );

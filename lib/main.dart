@@ -1,4 +1,5 @@
 import 'package:daylit/provider/App_State.dart';
+import 'package:daylit/provider/Quest_Create_Provider.dart';
 import 'package:daylit/provider/Quest_Provider.dart';
 import 'package:daylit/provider/Router_Provider.dart';
 import 'package:daylit/provider/User_Provider.dart';
@@ -70,8 +71,7 @@ class DayLitDriver extends StatelessWidget {
 
                 // 사용자 퀘스트 관리
                 ChangeNotifierProvider(create: (_) => QuestProvider()),
-
-
+                ChangeNotifierProvider(create: (_) => QuestCreateProvider())
                 // 필요한 다른 Provider들을 여기에 추가
                 // ChangeNotifierProvider(create: (_) => WalletProvider()),
               ],
@@ -128,7 +128,6 @@ class DayLitApp extends StatelessWidget {
           darkTheme: DaylitColors.getDarkTheme(),
           routerConfig: router,
 
-          // 이 부분만 추가하면 됩니다!
           builder: (context, child) {
             return AnnotatedRegion<SystemUiOverlayStyle>(
               value: appState.isDarkMode
@@ -259,40 +258,3 @@ bool get kDebugMode {
   assert(inDebugMode = true);
   return inDebugMode;
 }
-
-// ==================== 사용 예시 주석 ====================
-/*
-앱 시작 플로우:
-1. main()
-   - WidgetsFlutterBinding.ensureInitialized()
-   - FlutterNativeSplash.preserve() (스플래시 유지)
-   - GlobalErrorHandler.initialize() (에러 핸들러 설정)
-   - runApp(DayLitDriver())
-
-2. DayLitDriver
-   - 디바이스 타입 감지
-   - MultiProvider로 상태 관리 클래스들 주입
-   - ScreenUtilInit으로 반응형 UI 초기화
-   - BackPressHandler로 뒤로가기 처리
-
-3. DayLitApp
-   - MaterialApp.router로 GoRouter 설정
-   - 테마 설정 (라이트/다크)
-   - router의 initialLocation이 AppRoutes.init (/)
-
-4. InitializeApp (첫 번째 라우트)
-   - 앱 초기화 작업 수행
-   - 완료 후 FlutterNativeSplash.remove() (스플래시 제거)
-   - 로그인 상태에 따라 홈/로그인 페이지로 라우팅
-
-핵심 변경사항:
-- UserProvider를 MultiProvider에 추가
-- GlobalErrorHandler.initialize() 추가
-- 스플래시 제거 타이밍을 InitializeApp에 위임
-- Provider 구조 정리
-
-추가로 구현할 Provider들:
-- WalletProvider (릿 토큰 관리)
-- RoutineProvider (루틴 상태 관리)
-- SettingsProvider (설정 관리)
-*/
