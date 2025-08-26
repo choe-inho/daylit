@@ -23,12 +23,12 @@ class QuestAILoadingOverlay extends StatefulWidget {
   });
 
   /// 스태틱 메서드: 오버레이 표시
-  static Future<bool?> show({
+  static Future<QuestRequestResult?> show({
     required BuildContext context,
     required String purpose,
     required int totalDays,
   }) {
-    return showGeneralDialog<bool>(
+    return showGeneralDialog<QuestRequestResult>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.3),
@@ -171,64 +171,42 @@ class _QuestAILoadingOverlayState extends State<QuestAILoadingOverlay> {
             Padding(
               padding: EdgeInsetsGeometry.only(bottom: 24.h, left: 16.w , right: 16.w),
               child: _currentStep == -1 ?
-              Row(
-                children: [
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: ()=> Navigator.pop(context),
-                      child: Container(
-                        height: 46.h,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.error,
-                              width: 2
-                            )
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '뒤로가기',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      ),
-                    )
+              GestureDetector(
+                onTap: ()=> Navigator.pop(context),
+                child: Container(
+                  height: 46.h,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.error,
+                        width: 2
+                      )
                   ),
-                  SizedBox(width: 8.w,),
-                  Flexible(
-                    child: Container(
-                      height: 46.h,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          gradient: DaylitColors.errorGradient
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '재시도',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color:const Color(0xffffffff),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )
+                  alignment: Alignment.center,
+                  child: Text(
+                    '뒤로가기',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
-                ],
-              ) : _currentStep == _stepMessages.length ?
-
-              Container(
-                height: 46.h,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    gradient: DaylitColors.successGradient
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  '결과확인',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color:const Color(0xffffffff),
-                    fontWeight: FontWeight.w600,
+              ) : _currentStep == _stepMessages.length ?
+              GestureDetector(
+                onTap: ()=> Navigator.of(context).pop(QuestRequestResult.success),
+                child: Container(
+                  height: 46.h,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      gradient: DaylitColors.successGradient
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '결과확인',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color:const Color(0xffffffff),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ) :
@@ -326,7 +304,11 @@ class _QuestAILoadingOverlayState extends State<QuestAILoadingOverlay> {
     } else if (_currentStep >= _stepMessages.length) {
       return '${widget.totalDays}일간의 맞춤 루틴이 준비되었습니다!';
     } else {
-      return '잠시만 기다려주세요...';
+      String dot = '.';
+      for(var i = 1; i <= _currentStep; i++){
+        dot += '..';
+      }
+      return '잠시만 기다려주세요$dot';
     }
   }
 
@@ -342,33 +324,44 @@ class _QuestAILoadingOverlayState extends State<QuestAILoadingOverlay> {
 }
 
 /// Quest_Page_Mobile에서 완료 버튼 클릭 시 호출할 헬퍼 클래스
+enum QuestRequestResult{
+  error, //분석중 오류발생
+  failed, //분석실패
+  impossible, //불가능한 목표
+  difficult, //도움이 어려운 목표
+  isShort, //분석하기에는 너무 짧음
+  success //분석완료
+}
+
 class QuestAIGenerationHelper {
   /// AI 퀘스트 생성 프로세스 시작
-  static Future<void> startGeneration({
+  static Future<QuestRequestResult?> startGeneration({
     required BuildContext context,
     required QuestCreateProvider provider,
   }) async {
     // 입력 값 검증
     if (provider.purpose.trim().isEmpty) {
       _showErrorSnackBar(context, '목표를 입력해주세요.');
-      return;
+      return QuestRequestResult.isShort;
     }
 
     if (provider.purpose.trim().length < 20) {
       _showErrorSnackBar(context, '목표를 더 구체적으로 작성해주세요. (최소 20자)');
-      return;
+      return QuestRequestResult.isShort;
     }
 
     try {
       // AI 로딩 오버레이 표시
-      await QuestAILoadingOverlay.show(
+      final result = await QuestAILoadingOverlay.show(
         context: context,
         purpose: provider.purpose,
         totalDays: provider.totalDate,
       );
+
+      return result;
     } catch (e) {
       debugPrint('❌ [QuestAIGenerationHelper] 퀘스트 생성 오류: $e');
-      _showErrorSnackBar(context, '퀘스트 생성 중 오류가 발생했습니다.');
+      return QuestRequestResult.error;
     }
   }
 

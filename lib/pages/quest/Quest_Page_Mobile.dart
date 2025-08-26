@@ -1,9 +1,11 @@
 import 'package:daylit/l10n/app_localizations.dart';
 import 'package:daylit/provider/Quest_Create_Provider.dart';
+import 'package:daylit/provider/Router_Provider.dart';
 import 'package:daylit/util/Daylit_Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 
 // AI 로딩 오버레이 임포트 (실제 파일 경로에 맞게 수정)
 import '../../handler/Dialog_Handler.dart';
@@ -42,7 +44,7 @@ class _QuestPageMobileState extends State<QuestPageMobile> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final provider = widget.provider;
-
+    final routerProvider = Provider.of<RouterProvider>(context);
     return Column(
       children: [
         Expanded(
@@ -184,10 +186,17 @@ class _QuestPageMobileState extends State<QuestPageMobile> {
           child: InkWell(
             onTap: () async {
               // AI 퀘스트 생성 시작
-              await QuestAIGenerationHelper.startGeneration(
+              final result = await QuestAIGenerationHelper.startGeneration(
                 context: context,
                 provider: provider,
               );
+
+              debugPrint('퀘스트 생성 후 결과 - ${result}');
+              if(result != null){
+                if(result == QuestRequestResult.success){
+                  routerProvider.replaceTo(context, '/result');
+                }
+              }
             },
             borderRadius: BorderRadius.circular(15),
             child: Container(

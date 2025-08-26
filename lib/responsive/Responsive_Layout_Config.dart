@@ -18,6 +18,9 @@ enum PageLayoutType {
   /// 퀘스트 만들기
   quest,
 
+  /// 퀘스트 결과
+  result,
+
   /// 상세 페이지 (루틴 상세, 프로필 등)
   detail,
 
@@ -150,6 +153,14 @@ class ResponsiveLayoutConfig {
           showBrandingPattern: false,
           brandingTitle: '퀘스트 생성',
           brandingSubtitle: '목표를 설정하고 퀘스트를 생성하세요.',
+        );
+
+      case PageLayoutType.result:
+        return const ResponsiveLayoutConfig(
+          useCard: false,
+          showBrandingPattern: false,
+          brandingTitle: '퀘스트 완료',
+          brandingSubtitle: '어울리는 매일 퀘스트 목록을 만들었어요',
         );
 
       case PageLayoutType.onboarding:
