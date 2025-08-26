@@ -14,17 +14,16 @@ class QuestCreateProvider extends ChangeNotifier{
   String _constraints = '';
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
   bool _autoEndDate = true;
-
+  List<QuestDayModel> _quests = [];
   ///========= getter =========
   String get purpose => _purpose;
   String get constraints => _constraints;
   DateTime get endDate => _endDate;
   bool get autoEndDate => _autoEndDate;
-
-
   int get totalDate => _endDate.difference(DateTime.now()).inDays;
-  ///========= setter =========
+  List<QuestDayModel> get quests => _quests;
 
+  ///========= setter =========
   setAutoEndDate(bool value){
     if(value != _autoEndDate){
       _autoEndDate = value;
@@ -82,7 +81,7 @@ class QuestCreateProvider extends ChangeNotifier{
        createdAt: DateTime.now(),
    );
 
-   List<QuestDayModel> quests = List.generate(_autoEndDate ? 30 : totalDate,(index) => QuestDayModel(
+    _quests = List.generate(_autoEndDate ? 30 : totalDate,(index) => QuestDayModel(
        qdid: index.toString(),
        qid: qid,
        date: DateTime.now().add(Duration(days: index)),
@@ -93,7 +92,9 @@ class QuestCreateProvider extends ChangeNotifier{
        createdAt: DateTime.now()
    ));
 
-   return Random().nextBool() ? null : quest;
+    notifyListeners();
   }
 
+
+  ///
 }

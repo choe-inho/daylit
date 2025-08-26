@@ -1,15 +1,12 @@
-import 'package:daylit/widget/Auto_Back_Button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import 'dart:async';
-
 import '../../util/Daylit_Colors.dart';
 import '../../provider/Quest_Create_Provider.dart';
-import '../../provider/Router_Provider.dart';
+import '../../util/Enhanced_Error_SnackBar.dart';
 
 /// AI 퀘스트 생성 로딩 오버레이 페이지
 class QuestAILoadingOverlay extends StatefulWidget {
@@ -221,15 +218,13 @@ class _QuestAILoadingOverlayState extends State<QuestAILoadingOverlay> {
   /// 메인 로딩 컨테이너
   Widget _buildMainLoadingContainer(dynamic colors) {
     if(_currentStep == -1){
-      return Lottie.asset(_getLottieImage(), repeat: false, height: 180.r, width: 180.r);
+      return Lottie.asset(_getLottieImage(), repeat: false, height: 180.r, width: 180.r, fit: BoxFit.cover);
     }else if(_currentStep >= _stepMessages.length){
-      return SizedBox(
-          width: 180.r, height: 180.r,
-          child: Lottie.asset(_getLottieImage(), repeat: false));
+      return Lottie.asset(_getLottieImage(), repeat: false, height: 180.r, width: 180.r, fit: BoxFit.cover);
     }else{
       return SizedBox(
           width: 180.r, height: 180.r,
-          child: Lottie.asset(_getLottieImage(), reverse: true));
+          child: Lottie.asset(_getLottieImage(), reverse: true, height: 180.r, width: 180.r, fit: BoxFit.cover));
     }
   }
 
@@ -341,12 +336,12 @@ class QuestAIGenerationHelper {
   }) async {
     // 입력 값 검증
     if (provider.purpose.trim().isEmpty) {
-      _showErrorSnackBar(context, '목표를 입력해주세요.');
+      EnhancedErrorSnackBar.showError(context, '목표를 입력해주세요(최소 20자)');
       return QuestRequestResult.isShort;
     }
 
     if (provider.purpose.trim().length < 20) {
-      _showErrorSnackBar(context, '목표를 더 구체적으로 작성해주세요. (최소 20자)');
+      EnhancedErrorSnackBar.showError(context, '목표를 더 세부적으로 입력해주세요(최소 20자)');
       return QuestRequestResult.isShort;
     }
 
@@ -363,47 +358,5 @@ class QuestAIGenerationHelper {
       debugPrint('❌ [QuestAIGenerationHelper] 퀘스트 생성 오류: $e');
       return QuestRequestResult.error;
     }
-  }
-
-  /// 에러 스낵바
-  static void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'pre',
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        backgroundColor: DaylitColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        margin: EdgeInsets.all(16.w),
-      ),
-    );
-  }
-
-  /// 성공 스낵바
-  static void _showSuccessSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'pre',
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        backgroundColor: DaylitColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        margin: EdgeInsets.all(16.w),
-      ),
-    );
   }
 }
