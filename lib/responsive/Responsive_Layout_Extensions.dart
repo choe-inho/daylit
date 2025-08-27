@@ -71,6 +71,27 @@ extension ResponsiveLayoutExtensions on ResponsiveLayout {
     );
   }
 
+  /// 지갑 페이지용 생성자 (퀘스트, 루틴 목록 등)
+  ///
+  /// 특징:
+  /// - 브랜딩 영역 없음
+  /// - 2:8 비율 분할 (리스트 최적화)
+  /// - 사이드바 + 메인 컨텐츠 구조
+  static ResponsiveLayout wallet({
+    required Widget mobileLayout,
+    Widget? tabletLayout,
+    LayoutStyle? layoutStyle,
+    ResponsiveLayoutConfig? customConfig,
+  }) {
+    return ResponsiveLayout(
+      pageType: PageLayoutType.wallet,
+      mobileLayout: mobileLayout,
+      tabletLayout: tabletLayout,
+      layoutStyle: layoutStyle,
+      customConfig: customConfig,
+    );
+  }
+
   /// 퀴스트 생성 생성자 (퀘스트 생성 페이지)
   ///
   /// 특징:

@@ -1,6 +1,7 @@
 import 'package:daylit/init/Initialize_App.dart';
 import 'package:daylit/pages/quest_result/Quest_Result_Page.dart';
 import 'package:daylit/pages/settings/Settings_Page.dart';
+import 'package:daylit/pages/wallet/Wallet_Page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../pages/auth/Login_Page.dart';
@@ -18,6 +19,7 @@ class AppRoutes {
   static const home = '/home';
   static const quest = '/quest';
   static const result = '/result';
+  static const wallet = '/wallet';
   static const profile = '/profile';
   static const settings = '/settings';
 }
@@ -67,6 +69,13 @@ final GoRouter router = GoRouter(
       path: AppRoutes.home,
       name: 'home',
       builder: (context, state) => const HomePage(),
+    ),
+
+    // 지갑 페이지
+    GoRoute(
+        path: AppRoutes.wallet,
+        name: 'wallet',
+        builder: (context, state) => const WalletPage()
     ),
 
     // 퀘스트 페이지

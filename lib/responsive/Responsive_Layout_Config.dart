@@ -21,6 +21,9 @@ enum PageLayoutType {
   /// 퀘스트 결과
   result,
 
+  ///지갑
+  wallet,
+
   /// 상세 페이지 (루틴 상세, 프로필 등)
   detail,
 
@@ -154,6 +157,15 @@ class ResponsiveLayoutConfig {
           brandingTitle: '퀘스트 생성',
           brandingSubtitle: '목표를 설정하고 퀘스트를 생성하세요.',
         );
+
+      case PageLayoutType.wallet:
+        return const ResponsiveLayoutConfig(
+          useCard: false,
+          showBrandingPattern: false,
+          brandingTitle: '지갑',
+          brandingSubtitle: '릿을 충전하고 더 많은 목표를 달성해보세요',
+        );
+
 
       case PageLayoutType.result:
         return const ResponsiveLayoutConfig(
