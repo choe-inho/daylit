@@ -8,6 +8,7 @@ import '../pages/auth/Login_Page.dart';
 import '../pages/home/Home_Page.dart';
 import '../pages/profile/Profile_Page.dart';
 import '../pages/quest/Quest_Page.dart';
+import '../pages/quest_detail/Quest_Detail_Page.dart';
 import '../pages/single/Error_Page.dart';
 import '../pages/single/Loading_Page.dart';
 
@@ -18,10 +19,14 @@ class AppRoutes {
   static const login = '/login';
   static const home = '/home';
   static const quest = '/quest';
+  static const questDetail = '/quest/detail'; // 퀘스트 디테일 베이스 경로
   static const result = '/result';
   static const wallet = '/wallet';
   static const profile = '/profile';
   static const settings = '/settings';
+
+  // 퀘스트 디테일 페이지 경로 생성 헬퍼
+  static String questDetailWithId(String qid) => '$questDetail/$qid';
 }
 
 /// 앱의 전체 라우팅 설정을 관리하는 GoRouter 인스턴스
@@ -83,6 +88,15 @@ final GoRouter router = GoRouter(
       path: AppRoutes.quest,
       name: 'quest',
       builder: (context, state) => const QuestPage(),
+    ),
+
+    GoRoute(
+      path: '${AppRoutes.questDetail}/:qid',
+      name: 'quest-detail',
+      builder: (context, state) {
+        final qid = state.pathParameters['qid'] ?? '';
+        return QuestDetailPage(qid: qid);
+      },
     ),
 
     // 퀘스트 결과 페이지

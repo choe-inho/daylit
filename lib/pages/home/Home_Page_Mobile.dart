@@ -103,7 +103,7 @@ class _HomePageMobileState extends State<HomePageMobile> {
               QuestListWidget(
                 quests: activeQuests,
                 onQuestTap: (quest) {
-                  _onQuestTap(context, quest);
+                  _onQuestTap(context, quest.qid);
                 },
               ),
             ],
@@ -158,7 +158,7 @@ class _HomePageMobileState extends State<HomePageMobile> {
               QuestListWidget(
                 quests: completedQuests,
                 onQuestTap: (quest) {
-                  _onQuestTap(context, quest);
+                  _onQuestTap(context, quest.qid);
                 },
               ),
             ],
@@ -174,7 +174,7 @@ class _HomePageMobileState extends State<HomePageMobile> {
   }
 
   // 퀘스트 탭 핸들러
-  void _onQuestTap(BuildContext context, quest) {
-    context.read<RouterProvider>().pushTo(context,'/quest-detail');
+  void _onQuestTap(BuildContext context, String qid) {
+    context.read<RouterProvider>().pushToQuestDetail(context, qid);
   }
 }

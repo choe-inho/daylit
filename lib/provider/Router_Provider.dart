@@ -138,6 +138,35 @@ class RouterProvider extends ChangeNotifier {
     navigateTo(context, AppRoutes.login);
   }
 
+  /// 퀘스트 디테일 페이지로 이동 (push)
+  void pushToQuestDetail(BuildContext context, String qid) {
+    final detailPath = AppRoutes.questDetailWithId(qid);
+
+    _setLoading(true);
+    try {
+      pushTo(context, detailPath);
+      _logNavigation('Pushed to Quest Detail: $qid');
+    } catch (e) {
+      _logError('Failed to navigate to Quest Detail $qid: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// 현재 경로가 퀘스트 디테일인지 확인
+  bool get isQuestDetailPage => _currentPath.startsWith(AppRoutes.questDetail);
+
+  /// 현재 퀘스트 디테일 페이지의 QID 반환
+  String? get currentQuestId {
+    if (!isQuestDetailPage) return null;
+
+    // /quest/detail/quest_001 -> quest_001 추출
+    final parts = _currentPath.split('/');
+    if (parts.length >= 4) {
+      return parts[3];
+    }
+    return null;
+  }
   // ==================== Named 라우트 네비게이션 ====================
 
   /// Named 라우트로 이동
