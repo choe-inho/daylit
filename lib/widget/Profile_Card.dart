@@ -1,3 +1,4 @@
+import 'package:daylit/model/User_Model.dart';
 import 'package:daylit/model/Wallet_Model.dart';
 import 'package:daylit/provider/User_Provider.dart';
 import 'package:daylit/util/Daylit_Colors.dart';
@@ -23,17 +24,16 @@ class ProfileCard extends StatelessWidget {
     final isMobile = DaylitDevice.isMobile(context);
     final colors = DaylitColors.of(context);
     final userProvider = Provider.of<UserProvider>(context);
-    final user = userProvider.daylitUser;
 
     if (isMobile) {
-      return _buildMobileCard(context, colors, user);
+      return _buildMobileCard(context, colors, userProvider.daylitUser);
     } else {
-      return _buildTabletCard(context, colors, user);
+      return _buildTabletCard(context, colors, userProvider.daylitUser);
     }
   }
 
   /// 모바일용 프로필 카드
-  Widget _buildMobileCard(BuildContext context, dynamic colors, user) {
+  Widget _buildMobileCard(BuildContext context, dynamic colors, UserModel? user) {
     return GestureDetector(
       onTap: onTap,
       child: Container(

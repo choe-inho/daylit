@@ -15,9 +15,11 @@ class ProfileAvatar extends StatefulWidget {
 }
 
 class _ProfileAvatarState extends State<ProfileAvatar> {
+  late UserProvider userProvider;
+
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).daylitUser;
+    userProvider = Provider.of<UserProvider>(context);
     final isMobile = DaylitDevice.isMobile(context);
     final size = widget.size ?? (isMobile ? 33.r : 40.r);
 
@@ -26,7 +28,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: user?.profileUrl != null
+        gradient: userProvider.profileImageUrl != null
             ? null
             : DaylitColors.brandGradient,
         border: Border.all(
@@ -41,25 +43,25 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
           ),
         ],
       ),
-      child: user?.profileUrl != null
+      child: userProvider.profileImageUrl != null
           ? ClipOval(
         child: Image.network(
-          user!.profileUrl!,
+          userProvider.profileImageUrl!,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(user, context, size),
+          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(context, size),
         ),
       )
-          : _buildDefaultAvatar(user, context, size),
+          : _buildDefaultAvatar(context, size),
     );
   }
 
   /// 기본 아바타 (이름 이니셜)
-  Widget _buildDefaultAvatar(user, BuildContext context, double size) {
+  Widget _buildDefaultAvatar(BuildContext context, double size) {
     final fontSize = size * 0.42;
     return Container(
       alignment: Alignment.center,
       child: Text(
-        (user?.id?.isNotEmpty == true ? user!.id!.substring(0, 1).toUpperCase() : 'U'),
+        (userProvider.userId!.isNotEmpty == true ? userProvider.userId!.substring(0, 1).toUpperCase() : 'U'),
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
           fontSize: fontSize,
           color: const Color(0xffffffff),

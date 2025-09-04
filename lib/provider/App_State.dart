@@ -5,6 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// ⭐ Supabase 관련 import 추가
+import '../config/Subapase_Config.dart';
+import '../main.dart';
+import '../service/Supabase_Service.dart';
+
 import '../handler/Dialog_Handler.dart';
 import '../handler/dialog/Update_Sheet.dart';
 import '../provider/User_Provider.dart';
@@ -21,9 +27,12 @@ class AppState extends ChangeNotifier {
   String _language = 'ko';
   bool _isOffline = false;
   bool _isInitializing = true;
-  bool _isDarkMode = false; // 실제 다크 모드 여부
+  bool _isDarkMode = false;
   String _version = '0.0.0';
 
+  // ⭐ Supabase 관련 상태 추가
+  bool _isSupabaseInitialized = false;
+  String? _supabaseError;
 
   // ==================== Getters ====================
   bool get isInitialized => _isInitialized;
@@ -31,12 +40,16 @@ class AppState extends ChangeNotifier {
   String get language => _language;
   bool get isOffline => _isOffline;
   bool get isInitializing => _isInitializing;
-  bool get isDarkMode => _isDarkMode; // 실제 다크 모드 상태
+  bool get isDarkMode => _isDarkMode;
   String get version => _version;
+
+  // ⭐ Supabase 관련 getters 추가
+  bool get isSupabaseInitialized => _isSupabaseInitialized;
+  String? get supabaseError => _supabaseError;
+  bool get isSupabaseConnected => SupabaseService.instance.isConnected;
 
   // ==================== 초기화 상태 관리 ====================
   String _currentStep = '앱을 시작하는 중...';
-
   String get currentStep => _currentStep;
 
   /// 앱 초기화 (의존성들을 주입받음)
@@ -68,8 +81,12 @@ class AppState extends ChangeNotifier {
       InitStep('인터넷 연결 확인', () => _checkOnline()),
       InitStep('시스템 UI 설정', () => _setupSystemUI()),
       InitStep('디바이스 정보 확인', () => _checkDevice(context)),
-      InitStep('언어 정보 확인', ()=> _checkLanguage()),
+      InitStep('언어 정보 확인', () => _checkLanguage()),
       InitStep('버전 정보 확인', () => _checkVersion()),
+
+      // ⭐ Supabase 초기화 단계 추가
+      InitStep('Supabase 연결 확인', () => _initializeSupabase()),
+
       InitStep('사용자 데이터 로딩', () => _loadUserData(userProvider)),
       InitStep('로그인 상태 확인', () => _checkLoginStatus()),
       InitStep('초기화 완료', () => _finishInitialization(context, routerProvider)),
@@ -91,18 +108,83 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // AppState.dart에 추가할 함수들
+  // ==================== ⭐ Supabase 초기화 ====================
+
+  /// Supabase 서비스 초기화
+  Future<void> _initializeSupabase() async {
+    try {
+      _logInfo('Supabase 초기화 시작...');
+
+      // 환경 변수 초기화 확인 (main.dart에서 이미 호출되었지만 재확인)
+      if (!SupabaseConfig.isInitialized) {
+        _logInfo('환경 변수 재로드 시도...');
+        await SupabaseConfig.initialize();
+      }
+
+      // 설정 상태 로그 출력
+      SupabaseConfig.logConfigStatus();
+
+      if (!SupabaseConfig.isConfigured) {
+        throw StateError('Supabase 설정이 완료되지 않았습니다. .env 파일을 확인해주세요.');
+      }
+
+      // SupabaseService 초기화
+      final success = await SupabaseService.instance.initialize(
+        supabaseUrl: SupabaseConfig.supabaseUrl,
+        supabaseKey: SupabaseConfig.supabaseAnonKey,
+        enableRealtime: true,
+        storageRetryAttempts: SupabaseConfig.maxRetryAttempts,
+      );
+
+      if (success) {
+        _isSupabaseInitialized = true;
+        _supabaseError = null;
+        _logInfo('✅ Supabase 초기화 성공');
+
+        // 연결 상태 확인
+        final isConnected = await SupabaseService.instance.checkConnection();
+        _logInfo('🌐 Supabase 연결 상태: ${isConnected ? "연결됨" : "연결 실패"}');
+
+        // 헬스 체크 로그 출력 (디버그 모드에서만)
+        if (kDebugMode) {
+          SupabaseService.instance.logHealthStatus();
+        }
+
+      } else {
+        _isSupabaseInitialized = false;
+        _supabaseError = SupabaseService.instance.lastError;
+        _logError('❌ Supabase 초기화 실패: ${_supabaseError}');
+
+        // 오프라인 모드로 계속 진행할지 결정
+        if (SupabaseConfig.enableOfflineMode) {
+          _logInfo('⚠️ 오프라인 모드로 계속 진행');
+        } else {
+          throw StateError('Supabase 연결 실패: ${_supabaseError}');
+        }
+      }
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+    } catch (error) {
+      _isSupabaseInitialized = false;
+      _supabaseError = error.toString();
+      _logError('❌ Supabase 초기화 중 오류: $error');
+
+      // 오프라인 모드 지원 여부에 따라 처리
+      if (!SupabaseConfig.enableOfflineMode) {
+        rethrow; // 오프라인 모드가 비활성화되어 있으면 에러 전파
+      }
+    }
+  }
+
+  // ==================== 기존 초기화 메서드들 ====================
 
   /// 인터넷 연결 확인
   Future<void> _checkOnline() async {
     try {
-      // TODO: 실제 인터넷 연결 확인 로직
       final result = await InternetAddress.lookup('google.com');
       _isOffline = result.isEmpty;
-
-      _isOffline = false; // 임시로 온라인으로 설정
       _logInfo('네트워크 상태: ${_isOffline ? "오프라인" : "온라인"}');
-
       await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
       _isOffline = true;
@@ -110,16 +192,58 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// 시스템 UI 설정
+  Future<void> _setupSystemUI() async {
+    try {
+      // 상태바 및 네비게이션 바 스타일 설정
+      SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: _isDarkMode ? Brightness.light : Brightness.dark,
+          statusBarBrightness: _isDarkMode ? Brightness.dark : Brightness.light, // iOS용
+          systemNavigationBarColor: _isDarkMode ? const Color(0xFF121212) : Colors.white,
+          systemNavigationBarIconBrightness: _isDarkMode ? Brightness.light : Brightness.dark,
+        ),
+      );
+
+      // 화면 방향 설정
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+
+      // 가장자리까지 확장 모드 설정
+      await SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.edgeToEdge,
+      );
+
+      _logInfo('시스템 UI 설정 완료: ${_isDarkMode ? "다크 모드" : "라이트 모드"}');
+      await Future.delayed(const Duration(milliseconds: 100));
+    } catch (e) {
+      _logError('시스템 UI 설정 실패: $e');
+    }
+  }
+
+  /// 디바이스 정보 확인
+  Future<void> _checkDevice(BuildContext context) async {
+    try {
+      final deviceInfo = DaylitDevice.getDeviceType(context);
+      _logInfo('디바이스 타입: ${deviceInfo.name}');
+      await Future.delayed(const Duration(milliseconds: 200));
+    } catch (e) {
+      _logError('디바이스 정보 확인 실패: $e');
+    }
+  }
+
+  /// 언어 정보 확인
   Future<void> _checkLanguage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedLanguage = prefs.getString(languageKey);
 
       if (savedLanguage == null) {
-        // 새로운 방법: PlatformDispatcher 사용
         final systemLocale = ui.PlatformDispatcher.instance.locale.languageCode;
         _language = _getSupportedLanguage(systemLocale);
-
         _logInfo('시스템 언어 감지: $systemLocale → $_language');
       } else {
         _language = savedLanguage;
@@ -128,72 +252,35 @@ class AppState extends ChangeNotifier {
 
       await Future.delayed(const Duration(milliseconds: 200));
     } catch (e) {
-      _language = 'ko'; // 기본값으로 설정
+      _language = 'ko';
       _logError('언어 정보 확인 실패: $e');
     }
   }
 
-
   String _getSupportedLanguage(String languageCode) {
     const supportedLanguages = ['ko', 'en'];
 
-    // 지원하는 언어인지 확인
     if (supportedLanguages.contains(languageCode)) {
       return languageCode;
     }
 
-    // 지원하지 않는 언어인 경우 기본값 반환
-    // 한국/일본/중국어권은 한국어, 나머지는 영어
     switch (languageCode) {
-      case 'ja': // 일본어
-      case 'zh': // 중국어
+      case 'ja':
+      case 'zh':
         return 'ko';
       default:
         return 'en';
     }
   }
 
-  /// 언어 변경 (기존 함수 개선)
-  Future<void> changeLanguage(String newLanguage) async {
-    // 지원하는 언어인지 확인
-    final validLanguage = _getSupportedLanguage(newLanguage);
-    _language = validLanguage;
-
-    // SharedPreferences에 저장
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(languageKey, validLanguage);
-
-    notifyListeners();
-    _logInfo('언어 변경: $validLanguage');
-  }
-
-  /// 언어 표시명 반환
-  String getLanguageDisplayName(String? languageCode) {
-    switch (languageCode ?? _language) {
-      case 'ko':
-        return '한국어';
-      case 'en':
-        return 'English';
-      default:
-        return 'English';
-    }
-  }
-
-  /// 현재 언어 표시명
-  String get currentLanguageDisplayName => getLanguageDisplayName(_language);
-
   /// 버전 정보 확인
   Future<void> _checkVersion() async {
     try {
-      // 현재 앱 버전 가져오기
       final packageInfo = await PackageInfo.fromPlatform();
       _version = packageInfo.version;
-
       _logInfo('현재 앱 버전: $_version');
 
-      // TODO: 버전 업데이트 체크
       await _checkForUpdates();
-
       await Future.delayed(const Duration(milliseconds: 400));
     } catch (e) {
       _version = '0.0.0';
@@ -201,163 +288,80 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// 업데이트 체크 (형태만)
   Future<void> _checkForUpdates() async {
     try {
       // TODO: 실제 업데이트 체크 로직 구현
-      // 1. 서버 API 호출하여 최신 버전 확인
-      // 2. 현재 버전과 비교
-      // 3. 업데이트 필요 시 다이얼로그 표시
-
-      // 임시 업데이트 체크 로직
       final needsUpdate = await _simulateUpdateCheck();
-
       if (needsUpdate) {
         _logInfo('업데이트가 필요합니다');
-        // 업데이트 다이얼로그 표시는 초기화 완료 후에 호출
       }
     } catch (e) {
       _logError('업데이트 체크 실패: $e');
     }
   }
 
-  /// 업데이트 체크 시뮬레이션 (임시)
   Future<bool> _simulateUpdateCheck() async {
-    // TODO: 실제 서버 API 호출로 교체
     await Future.delayed(const Duration(milliseconds: 500));
-    return false; // 임시로 업데이트 불필요로 설정
+    return false;
   }
 
-  /// 업데이트 다이얼로그 표시 (초기화 완료 후 호출)
-  Future<void> showUpdateDialogIfNeeded(BuildContext context) async {
-    final needsUpdate = await _simulateUpdateCheck();
-
-    if (needsUpdate && context.mounted) {
-      // TODO: 실제 업데이트 정보 가져오기
-      final updateInfo = UpdateInfo(
-        currentVersion: _version,
-        latestVersion: '1.1.0',
-        isForceUpdate: false,
-        updateMessage: '새로운 기능이 추가되었습니다!',
-        changelog: [
-          '성능 개선',
-          '버그 수정',
-          '새로운 UI 추가'
-        ],
-      );
-
-      await DialogHandler.showUpdateSheet(
-        context: context,
-        updateInfo: updateInfo,
-      );
-    }
-  }
-
-  /// 컬러 모드 체크 및 실제 다크 모드 여부 판단
+  /// 컬러 모드 체크
   Future<void> _checkColorMode(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final savedMode = prefs.getString(darkModeKey);
 
-    // 저장된 설정이 없으면 시스템 모드로 설정
     _colorMode = savedMode ?? 'system';
 
     // 실제 다크 모드 여부 판단
-    _isDarkMode = _calculateDarkMode(context);
-
-    _logInfo('컬러 모드: $_colorMode, 실제 다크 모드: $_isDarkMode');
-  }
-
-  /// 실제 다크 모드 여부 계산
-  bool _calculateDarkMode(BuildContext context) {
-    switch (_colorMode) {
-      case 'dark':
-        return true;
-      case 'light':
-        return false;
-      case 'system':
-      default:
-      // 시스템 설정에 따라 판단
-        final platformBrightness = MediaQuery.of(context).platformBrightness;
-        return platformBrightness == Brightness.dark;
-    }
-  }
-
- // AppState.dart의 _setupSystemUI() 메서드 수정
-  Future<void> _setupSystemUI() async {
-    // 상태바 설정은 DayLitApp의 AnnotatedRegion에서 처리하므로 제거
-    // 화면 방향 설정만 유지
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    // 기타 시스템 설정들 (필요한 경우)
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge, // 가장자리까지 확장
-    );
-
-    _logInfo('시스템 UI 설정 완료: ${_isDarkMode ? "다크 모드" : "라이트 모드"}');
-  }
-
-  /// 컬러 모드 변경 (설정에서 호출)
-  Future<void> changeColorMode(String newMode, BuildContext context) async {
-    _colorMode = newMode;
-    _isDarkMode = _calculateDarkMode(context);
-
-    // SharedPreferences에 저장
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(darkModeKey, newMode);
-
-    // 시스템 UI 다시 설정
-    await _setupSystemUI();
-
-    notifyListeners();
-    _logInfo('컬러 모드 변경: $newMode → 실제 다크 모드: $_isDarkMode');
-  }
-
-  /// 시스템 다크 모드 변경 감지 (앱이 실행 중일 때)
-  void updateSystemBrightness(BuildContext context) {
     if (_colorMode == 'system') {
-      final newDarkMode = _calculateDarkMode(context);
-      if (_isDarkMode != newDarkMode) {
-        _isDarkMode = newDarkMode;
-        _setupSystemUI();
-        notifyListeners();
-        _logInfo('시스템 밝기 변경 감지: $_isDarkMode');
-      }
+      final brightness = MediaQuery.of(context).platformBrightness;
+      _isDarkMode = brightness == Brightness.dark;
+    } else {
+      _isDarkMode = _colorMode == 'dark';
     }
-  }
 
-  /// 디바이스 정보 확인
-  Future<void> _checkDevice(BuildContext context) async {
-    final deviceType = DaylitDevice.getDeviceType(context);
-    final designSize = DaylitDevice.getDesignSize(context);
-
-    _logInfo('디바이스 타입: $deviceType');
-    _logInfo('디자인 크기: ${designSize.width}x${designSize.height}');
-
-    await Future.delayed(const Duration(milliseconds: 500));
+    _logInfo('컬러 모드: $_colorMode (실제: ${_isDarkMode ? "다크" : "라이트"})');
+    await Future.delayed(const Duration(milliseconds: 100));
   }
 
   /// 사용자 데이터 로딩
   Future<void> _loadUserData(UserProvider userProvider) async {
     try {
-      // userProvider를 직접 사용
-      // await userProvider.loadUserFromStorage();
+      // ⭐ Supabase 인증 상태 확인 후 사용자 데이터 로딩
+      if (_isSupabaseInitialized && SupabaseService.instance.isLoggedIn) {
+        // Supabase에서 사용자 정보 로드
+        await userProvider.loadUserFromSupabase();
+        _logInfo('Supabase에서 사용자 데이터 로딩 완료');
+      } else {
+        // 로컬 저장소에서 사용자 정보 로드 (오프라인 모드)
+        // await userProvider.loadUserFromStorage();
+        _logInfo('로컬에서 사용자 데이터 로딩 완료');
+      }
 
-      _logInfo('사용자 데이터 로딩 완료');
       await Future.delayed(const Duration(milliseconds: 800));
     } catch (e) {
       _logError('사용자 데이터 로딩 실패: $e');
     }
   }
 
-
   /// 로그인 상태 확인
   Future<void> _checkLoginStatus() async {
     try {
-      // TODO: 로그인 상태 확인
-      _logInfo('로그인 상태 확인 완료');
+      if (_isSupabaseInitialized) {
+        // Supabase 인증 상태 확인
+        final isLoggedIn = SupabaseService.instance.isLoggedIn;
+        final userEmail = SupabaseService.instance.userEmail;
+
+        if (isLoggedIn && userEmail != null) {
+          _logInfo('로그인된 사용자: $userEmail');
+        } else {
+          _logInfo('비로그인 상태');
+        }
+      } else {
+        // TODO: 오프라인 모드에서의 로그인 상태 확인
+        _logInfo('오프라인 모드: 로컬 로그인 상태 확인');
+      }
+
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
       _logError('로그인 상태 확인 실패: $e');
@@ -409,7 +413,13 @@ class AppState extends ChangeNotifier {
   /// 사용자 로그인 상태 확인
   Future<bool> _checkIfUserIsLoggedIn() async {
     try {
-      // TODO: 실제 로그인 상태 확인 로직
+      // ⭐ Supabase 인증 상태 우선 확인
+      if (_isSupabaseInitialized) {
+        return SupabaseService.instance.isLoggedIn;
+      }
+
+      // 오프라인 모드에서는 로컬 확인
+      // TODO: 로컬 로그인 상태 확인 로직
       return false;
     } catch (e) {
       _logError('로그인 상태 확인 중 오류: $e');
@@ -424,6 +434,111 @@ class AppState extends ChangeNotifier {
 
     _isInitializing = false;
     notifyListeners();
+  }
+
+  // ==================== ⭐ Supabase 관련 헬퍼 메서드 ====================
+
+  /// Supabase 재연결 시도
+  Future<bool> reconnectSupabase() async {
+    try {
+      _logInfo('Supabase 재연결 시도...');
+
+      if (!SupabaseService.instance.isInitialized) {
+        // 재초기화
+        await _initializeSupabase();
+      } else {
+        // 연결 상태만 재확인
+        await SupabaseService.instance.checkConnection();
+      }
+
+      notifyListeners();
+      return _isSupabaseInitialized;
+    } catch (e) {
+      _logError('Supabase 재연결 실패: $e');
+      return false;
+    }
+  }
+
+  /// Supabase 상태 정보 반환
+  Map<String, dynamic> getSupabaseStatus() {
+    return {
+      'initialized': _isSupabaseInitialized,
+      'connected': isSupabaseConnected,
+      'error': _supabaseError,
+      'offlineMode': !_isSupabaseInitialized && SupabaseConfig.enableOfflineMode,
+      'healthStatus': _isSupabaseInitialized
+          ? SupabaseService.instance.getHealthStatus()
+          : null,
+    };
+  }
+
+  // ==================== 기존 메서드들 ====================
+
+  /// 언어 변경
+  Future<void> changeLanguage(String newLanguage) async {
+    final validLanguage = _getSupportedLanguage(newLanguage);
+    _language = validLanguage;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(languageKey, validLanguage);
+
+    notifyListeners();
+    _logInfo('언어 변경: $validLanguage');
+  }
+
+  /// 언어 표시명 반환
+  String getLanguageDisplayName(String? languageCode) {
+    switch (languageCode ?? _language) {
+      case 'ko': return '한국어';
+      case 'en': return 'English';
+      default: return 'English';
+    }
+  }
+
+  String get currentLanguageDisplayName => getLanguageDisplayName(_language);
+
+  /// 컬러 모드 변경 (ColorMode_Sheet에서 호출)
+  Future<void> changeColorMode(String newMode, BuildContext context) async {
+    _colorMode = newMode;
+    _isDarkMode = _calculateDarkMode(context);
+
+    // SharedPreferences에 저장
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(darkModeKey, newMode);
+
+    // 시스템 UI 다시 설정
+    await _setupSystemUI();
+
+    notifyListeners();
+    _logInfo('컬러 모드 변경: $newMode → 실제 다크 모드: $_isDarkMode');
+  }
+
+  /// 실제 다크 모드 여부 계산
+  bool _calculateDarkMode(BuildContext context) {
+    switch (_colorMode) {
+      case 'dark':
+        return true;
+      case 'light':
+        return false;
+      case 'system':
+      default:
+      // 시스템 설정에 따라 판단
+        final platformBrightness = MediaQuery.of(context).platformBrightness;
+        return platformBrightness == Brightness.dark;
+    }
+  }
+
+  /// 시스템 다크 모드 변경 감지 (앱이 실행 중일 때)
+  void updateSystemBrightness(BuildContext context) {
+    if (_colorMode == 'system') {
+      final newDarkMode = _calculateDarkMode(context);
+      if (_isDarkMode != newDarkMode) {
+        _isDarkMode = newDarkMode;
+        _setupSystemUI();
+        notifyListeners();
+        _logInfo('시스템 밝기 변경 감지: $_isDarkMode');
+      }
+    }
   }
 
   /// 정보 로깅

@@ -40,8 +40,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   lucide_icons_flutter: ^3.0.6
   lottie:
+
   #database
   supabase_flutter:
+  logging:
 
   #라우팅 관리
   go_router:
@@ -61,6 +63,9 @@ dependencies:
 
   #인터넷 관련
   url_launcher:
+
+  #환경변수 관리
+  flutter_dotenv:
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +95,7 @@ flutter:
     - assets/icon/
     - assets/social/
     - assets/lottie/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
