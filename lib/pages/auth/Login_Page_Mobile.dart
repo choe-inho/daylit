@@ -1,12 +1,15 @@
-import 'package:daylit/handler/Dialog_Handler.dart';
+import 'package:daylit/handler/extention/Social_Login_Extension.dart';
+import 'package:daylit/provider/Router_Provider.dart';
 import 'package:daylit/util/Daylit_Colors.dart';
 import 'package:daylit/util/Daylit_Social.dart';
 import 'package:daylit/widget/Daylit_Logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../provider/User_Provider.dart';
 
 class LoginPageMobile extends StatefulWidget {
   const LoginPageMobile({super.key});
@@ -59,31 +62,23 @@ class _LoginPageMobileState extends State<LoginPageMobile>
   }
 
   // 소셜 로그인 처리
-  Future<void> _handleSocialLogin(Social social) async {
-    if (_isLoading) return;
+  // 로그인 버튼에서 호출
+  Future<void> _handleSocialLogin(Social socialType) async {
+    final userProvider = context.read<UserProvider>();
+    final routeProvider = context.read<RouterProvider>();
+    final success = await userProvider.signInWithSocial(
+      socialType: socialType,
+      context: context,
+    );
 
-    setState(() {
-      _isLoading = true;
-      _loadingSocial = social;
-    });
-
-    try {
-      // TODO: 실제 소셜 로그인 로직 구현
-      await Future.delayed(const Duration(seconds: 2));
-      // 성공 시 홈으로 이동
-      if (mounted) {
-        context.go('/home');
-      }
-
-    } catch (e) {
-      _showError('로그인에 실패했습니다. 다시 시도해 주세요.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _loadingSocial = null;
-        });
-      }
+    if (success) {
+      // 로그인 성공 - 홈 화면으로 이동
+      routeProvider.navigateTo(context, '/home');
+    } else {
+      // 로그인 실패 - 에러 메시지 표시
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(userProvider.errorMessage ?? '로그인 실패')),
+      );
     }
   }
 
