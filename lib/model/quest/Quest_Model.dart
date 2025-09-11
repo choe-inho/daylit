@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../util/DateTime_Utils.dart';
 import '../../util/Routine_Utils.dart';
 
@@ -58,7 +59,52 @@ class QuestModel {
     );
   }
 
-  // JSON에서 생성
+  // ==================== Supabase JSON 변환 (camelCase 컬럼) ====================
+
+  /// Supabase에서 반환된 JSON으로부터 QuestModel 생성
+  ///
+  /// SQL 스키마의 camelCase 컬럼명과 매핑:
+  /// - "totalDays", "totalCost", "startDate", "endDate" 등
+  factory QuestModel.fromSupabaseJson(Map<String, dynamic> json) {
+    return QuestModel(
+      qid: json['qid'] ?? '',
+      uid: json['uid'] ?? '',
+      purpose: json['purpose'] ?? '',
+      constraints: json['constraints'] ?? '',
+      totalDays: json['totalDays'] ?? 0,  // camelCase 컬럼명
+      totalCost: json['totalCost'] ?? 0,  // camelCase 컬럼명
+      status: toRoutineStatus(json['status']),
+      startDate: _parseSupabaseDate(json['startDate']) ?? DateTime.now(),
+      endDate: _parseSupabaseDate(json['endDate']) ?? DateTime.now(),
+      createdAt: _parseSupabaseDateTime(json['createdAt']) ?? DateTime.now(),
+      completedAt: _parseSupabaseDateTime(json['completedAt']),
+      aiRequestData: json['aiRequestData'] as Map<String, dynamic>?,
+    );
+  }
+
+  /// Supabase 업데이트용 JSON 변환
+  Map<String, dynamic> toSupabaseJson() {
+    return {
+      'qid': qid,
+      'uid': uid,
+      'purpose': purpose,
+      'constraints': constraints,
+      'totalDays': totalDays,      // camelCase 컬럼명
+      'totalCost': totalCost,      // camelCase 컬럼명
+      'status': status.value,
+      'startDate': _formatDateForSupabase(startDate),
+      'endDate': _formatDateForSupabase(endDate),
+      'createdAt': _formatDateTimeForSupabase(createdAt),
+      'completedAt': completedAt != null
+          ? _formatDateTimeForSupabase(completedAt!)
+          : null,
+      'aiRequestData': aiRequestData,
+    };
+  }
+
+  // ==================== 기존 JSON 변환 (snake_case 호환) ====================
+
+  /// 기존 JSON(snake_case)에서 생성 - 하위 호환성 유지
   factory QuestModel.fromJson(Map<String, dynamic> json) {
     return QuestModel(
       qid: json['qid'] ?? '',
@@ -72,17 +118,17 @@ class QuestModel {
       endDate: DateTimeUtils.fromUtcString(json['end_date']) ?? DateTime.now(),
       createdAt: DateTimeUtils.fromUtcString(json['created_at']) ?? DateTime.now(),
       completedAt: DateTimeUtils.fromUtcString(json['completed_at']),
-      aiRequestData: json['ai_request_data']
+      aiRequestData: json['ai_request_data'] as Map<String, dynamic>?,
     );
   }
 
-  // toMap
+  /// 기존 Map 변환 - 하위 호환성 유지
   Map<String, dynamic> toMap() {
     return {
       'qid': qid,
       'uid': uid,
       'purpose': purpose,
-      'constraints' : constraints,
+      'constraints': constraints,
       'total_days': totalDays,
       'total_cost': totalCost,
       'status': status.value,
@@ -94,7 +140,8 @@ class QuestModel {
     };
   }
 
-  // copyWith
+  // ==================== 복사 메서드 ====================
+
   QuestModel copyWith({
     String? qid,
     String? uid,
@@ -125,27 +172,156 @@ class QuestModel {
     );
   }
 
-  // 유틸리티
+  // ==================== 유틸리티 메서드 ====================
+
   bool get isActive => status == RoutineStatus.active;
   bool get isCompleted => status == RoutineStatus.completed;
   bool get isCreating => status == RoutineStatus.creating;
+  bool get isPaused => status == RoutineStatus.paused;
+  bool get isFailed => status == RoutineStatus.failed;
+  bool get isCancelled => status == RoutineStatus.cancelled;
+
   int get daysRemaining => endDate.difference(DateTime.now()).inDays + 1;
   int get daysElapsed => DateTime.now().difference(startDate).inDays + 1;
   double get progressPercent => (daysElapsed / totalDays * 100).clamp(0, 100);
 
-  @override
-  String toString() {
-    return 'RoutineModel{qid: $qid, purpose: $purpose, status: $status, days: $totalDays}';
+  /// 퀘스트가 오늘 시작되는지
+  bool get startsToday {
+    final today = DateTime.now();
+    return startDate.year == today.year &&
+        startDate.month == today.month &&
+        startDate.day == today.day;
   }
 
-  static RoutineStatus toRoutineStatus(String? status) {
+  /// 퀘스트가 오늘 종료되는지
+  bool get endsToday {
+    final today = DateTime.now();
+    return endDate.year == today.year &&
+        endDate.month == today.month &&
+        endDate.day == today.day;
+  }
+
+  /// 퀘스트가 현재 진행 중인지 (날짜 기준)
+  bool get isOngoing {
+    final now = DateTime.now();
+    return startDate.isBefore(now) && endDate.isAfter(now);
+  }
+
+  /// 퀘스트가 미래에 시작되는지
+  bool get isUpcoming {
+    return startDate.isAfter(DateTime.now());
+  }
+
+  /// 퀘스트가 기간이 지났는지
+  bool get isExpired {
+    return endDate.isBefore(DateTime.now()) && !isCompleted;
+  }
+
+  /// 하루 비용
+  double get dailyCost => totalCost / totalDays;
+
+  /// 상태 표시 문자열
+  String get statusDisplayName {
     switch (status) {
-      case 'creating': return RoutineStatus.creating;
-      case 'active': return RoutineStatus.active;
-      case 'paused': return RoutineStatus.paused;
-      case 'completed': return RoutineStatus.completed;
-      case 'failed': return RoutineStatus.failed;
-      default: return RoutineStatus.creating;
+      case RoutineStatus.creating:
+        return 'AI 생성 중';
+      case RoutineStatus.active:
+        return '진행 중';
+      case RoutineStatus.paused:
+        return '일시정지';
+      case RoutineStatus.completed:
+        return '완료';
+      case RoutineStatus.failed:
+        return '실패';
+      case RoutineStatus.cancelled:
+        return '취소됨';
     }
+  }
+
+  /// 남은 기간 문자열
+  String get remainingDaysText {
+    if (isCompleted) return '완료됨';
+    if (isExpired) return '기간 만료';
+
+    final remaining = daysRemaining;
+    if (remaining <= 0) return '오늘 종료';
+    if (remaining == 1) return '1일 남음';
+    return '${remaining}일 남음';
+  }
+
+  // ==================== Supabase 날짜 파싱 헬퍼 ====================
+
+  /// Supabase DATE 필드 파싱 (YYYY-MM-DD 형식)
+  static DateTime? _parseSupabaseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+
+    try {
+      if (value is String) {
+        // DATE 타입은 "YYYY-MM-DD" 형식으로 반환됨
+        return DateTime.parse('${value}T00:00:00.000Z').toLocal();
+      }
+    } catch (e) {
+      debugPrint('날짜 파싱 실패: $value - $e');
+    }
+    return null;
+  }
+
+  /// Supabase TIMESTAMP 필드 파싱
+  static DateTime? _parseSupabaseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+
+    try {
+      if (value is String) {
+        return DateTime.parse(value).toLocal();
+      }
+    } catch (e) {
+      debugPrint('타임스탬프 파싱 실패: $value - $e');
+    }
+    return null;
+  }
+
+  /// DATE 필드용 포맷 (YYYY-MM-DD)
+  static String _formatDateForSupabase(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  /// TIMESTAMP 필드용 포맷
+  static String _formatDateTimeForSupabase(DateTime dateTime) {
+    return dateTime.toUtc().toIso8601String();
+  }
+
+  // ==================== 디버그 ====================
+
+  @override
+  String toString() {
+    return 'QuestModel{qid: $qid, purpose: $purpose, status: $status, days: $totalDays, cost: $totalCost}';
+  }
+
+  /// 디버그용 상세 정보
+  String toDebugString() {
+    return '''
+QuestModel Debug Info:
+  qid: $qid
+  uid: $uid
+  purpose: $purpose
+  constraints: $constraints
+  totalDays: $totalDays
+  totalCost: $totalCost
+  status: $status (${statusDisplayName})
+  startDate: ${_formatDateForSupabase(startDate)}
+  endDate: ${_formatDateForSupabase(endDate)}
+  createdAt: $createdAt
+  completedAt: $completedAt
+  daysRemaining: $daysRemaining
+  progressPercent: ${progressPercent.toStringAsFixed(1)}%
+  isActive: $isActive
+  isOngoing: $isOngoing
+  isUpcoming: $isUpcoming
+  isExpired: $isExpired
+    ''';
   }
 }

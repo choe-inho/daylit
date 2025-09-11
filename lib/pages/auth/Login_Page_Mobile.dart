@@ -5,8 +5,8 @@ import 'package:daylit/util/Daylit_Social.dart';
 import 'package:daylit/widget/Daylit_Logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../provider/User_Provider.dart';
@@ -20,7 +20,6 @@ class LoginPageMobile extends StatefulWidget {
 
 class _LoginPageMobileState extends State<LoginPageMobile>
     with SingleTickerProviderStateMixin {
-
   // 로딩 상태 관리
   bool _isLoading = false;
   Social? _loadingSocial;
@@ -62,37 +61,35 @@ class _LoginPageMobileState extends State<LoginPageMobile>
   }
 
   // 소셜 로그인 처리
-  // 로그인 버튼에서 호출
   Future<void> _handleSocialLogin(Social socialType) async {
-    final userProvider = context.read<UserProvider>();
-    final routeProvider = context.read<RouterProvider>();
-    final success = await userProvider.signInWithSocial(
-      socialType: socialType,
-      context: context,
-    );
+    setState(() {
+      _isLoading = true;
+      _loadingSocial = socialType;
+    });
 
-    if (success) {
-      // 로그인 성공 - 홈 화면으로 이동
-      routeProvider.navigateTo(context, '/home');
-    } else {
-      // 로그인 실패 - 에러 메시지 표시
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(userProvider.errorMessage ?? '로그인 실패')),
+    try {
+      final userProvider = context.read<UserProvider>();
+      // ✅ 수정된 메서드 사용 (실제 로그인 완료까지 대기)
+      final success = await userProvider.signInWithSocial(
+        socialType: socialType,
+        context: context,
       );
-    }
-  }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: DaylitColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-      ),
-    );
+      if (success) {
+        // ✅ 이제 진짜 로그인 성공 시에만 실행됨
+        final routeProvider = context.read<RouterProvider>();
+        routeProvider.navigateToHome(context);
+      } else {
+        print('로그인에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (e) {
+      print('로그인 중 오류가 발생했습니다: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isLoading = false;
+        _loadingSocial = null;
+      });
+    }
   }
 
   @override
@@ -125,7 +122,18 @@ class _LoginPageMobileState extends State<LoginPageMobile>
       children: [
         SizedBox(height: 150.h,),
         // 로고
-        DayLitLogo.medium(),
+        InkWell(
+            onTap: (){
+              // 즉시 확인해보세요
+              final user = Supabase.instance.client.auth.currentUser;
+              if (user != null) {
+                print('✅ 실제로는 로그인된 상태: ${user.email}');
+                // 이 경우 UserProvider나 Router 문제임
+              }else{
+                print('✅ 실제로는 로그인 안됨');
+              }
+            },
+            child: DayLitLogo.medium()),
 
         SizedBox(height: 16.h),
 

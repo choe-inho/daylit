@@ -1,40 +1,44 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../provider/User_Provider.dart';
 import '../../service/Supabase_Service.dart';
 import '../../util/Daylit_Social.dart';
 
-/// 소셜 로그인 확장된 UserProvider
+/// 수정된 소셜 로그인 확장 (2024-2025 최신 방법)
 ///
-/// Supabase OAuth를 통한 소셜 로그인 기능을 제공합니다.
-/// Google, Apple, Discord, Kakao 모두 지원 (Supabase 기본 제공)
+/// ✅ 실제 AuthState 이벤트까지 기다리는 올바른 방식
+/// ✅ OAuth 시작 ≠ 로그인 성공을 구분
+/// ✅ 타임아웃 처리로 무한 대기 방지
 extension SocialLoginExtension on UserProvider {
 
   // ==================== 소셜 로그인 메인 메서드 ====================
 
-  /// 소셜 로그인 실행
+  /// 소셜 로그인 실행 (수정된 버전)
   ///
   /// [socialType]: 로그인할 소셜 플랫폼 타입
   /// [context]: BuildContext (리다이렉트용)
+  /// [timeout]: 로그인 대기 시간 (기본 2분)
   ///
-  /// Returns: 로그인 성공 여부
-  ///
-  /// 참고: 로딩 상태 관리는 UserProvider 클래스에서 별도로 구현하세요.
+  /// Returns: 실제 로그인 성공 여부 (AuthState 이벤트 기준)
   Future<bool> signInWithSocial({
     required Social socialType,
     BuildContext? context,
+    Duration timeout = const Duration(minutes: 2),
   }) async {
     try {
       switch (socialType) {
         case Social.google:
-          return await _signInWithGoogle();
+          return await _signInWithGoogleFixed(timeout);
         case Social.apple:
-          return await _signInWithApple();
+          return await _signInWithAppleFixed(timeout);
         case Social.discord:
-          return await _signInWithDiscord();
+          return await _signInWithDiscordFixed(timeout);
         case Social.kakao:
-          return await _signInWithKakao();
+          return await _signInWithKakaoFixed(timeout);
       }
     } catch (error) {
       _logError('소셜 로그인 실패: $error');
@@ -42,81 +46,75 @@ extension SocialLoginExtension on UserProvider {
     }
   }
 
-  // ==================== 개별 소셜 로그인 구현 ====================
+  // ==================== 수정된 개별 소셜 로그인 구현 ====================
 
-  /// Google 소셜 로그인
-  Future<bool> _signInWithGoogle() async {
+  /// 🔧 수정된 카카오 소셜 로그인 (실제 로그인 완료까지 대기)
+  Future<bool> _signInWithKakaoFixed(Duration timeout) async {
+    _logInfo('🚀 카카오 로그인 시작 (실제 완료까지 대기)');
+
+    // 로그인 결과를 기다릴 Completer 생성
+    final Completer<bool> loginCompleter = Completer<bool>();
+    StreamSubscription<AuthState>? authSubscription;
+    Timer? timeoutTimer;
+
     try {
-      _logInfo('Google 로그인 시작');
+      // 현재 세션 상태 저장 (중복 이벤트 방지용)
+      final initialUser = SupabaseService.instance.auth.currentUser;
+      _logInfo('초기 사용자 상태: ${initialUser?.email ?? "없음"}');
 
-      final response = await SupabaseService.instance.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: _getRedirectUrl(),
-        authScreenLaunchMode: LaunchMode.externalApplication,
+      // ✅ AuthStateChange 리스너 설정 (핵심!)
+      authSubscription = SupabaseService.instance.auth.onAuthStateChange.listen(
+            (AuthState data) {
+          final event = data.event;
+          final session = data.session;
+          final user = session?.user;
+
+          _logInfo('🔐 Kakao Auth Event 수신: $event');
+          _logInfo('  - Session: ${session != null}');
+          _logInfo('  - User: ${user?.email ?? "없음"}');
+
+          // ✅ 로그인 성공 이벤트 처리
+          if (event == AuthChangeEvent.signedIn &&
+              session != null &&
+              user != null &&
+              user.id != initialUser?.id) {  // 새로운 사용자인지 확인
+
+            _logInfo('🎉 카카오 로그인 성공: ${user.email}');
+
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(true);
+            }
+          }
+
+          // ✅ 로그아웃 이벤트 처리 (로그인 실패 의미)
+          else if (event == AuthChangeEvent.signedOut &&
+              initialUser == null) {  // 원래 로그인 상태가 아니었다면
+
+            _logError('❌ 카카오 로그인 실패 (로그아웃 이벤트)');
+
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(false);
+            }
+          }
+        },
+        onError: (error) {
+          _logError('카카오 Auth 리스너 에러: $error');
+          if (!loginCompleter.isCompleted) {
+            loginCompleter.completeError(error);
+          }
+        },
       );
 
-      if (response) {
-        _logInfo('Google OAuth 요청 성공');
-        return true;
-      } else {
-        throw Exception('Google 로그인에 실패했습니다.');
-      }
-    } catch (error) {
-      _logError('Google 로그인 실패: $error');
-      throw Exception('Google 로그인 중 오류가 발생했습니다: ${error.toString()}');
-    }
-  }
+      // ✅ 타임아웃 타이머 설정
+      timeoutTimer = Timer(timeout, () {
+        _logError('⏰ 카카오 로그인 타임아웃 (${timeout.inMinutes}분)');
+        if (!loginCompleter.isCompleted) {
+          loginCompleter.complete(false);
+        }
+      });
 
-  /// Apple 소셜 로그인
-  Future<bool> _signInWithApple() async {
-    try {
-      _logInfo('Apple 로그인 시작');
-
-      final response = await SupabaseService.instance.auth.signInWithOAuth(
-        OAuthProvider.apple,
-        redirectTo: _getRedirectUrl(),
-        authScreenLaunchMode: LaunchMode.externalApplication,
-      );
-
-      if (response) {
-        _logInfo('Apple OAuth 요청 성공');
-        return true;
-      } else {
-        throw Exception('Apple 로그인에 실패했습니다.');
-      }
-    } catch (error) {
-      _logError('Apple 로그인 실패: $error');
-      throw Exception('Apple 로그인 중 오류가 발생했습니다: ${error.toString()}');
-    }
-  }
-
-  /// Discord 소셜 로그인
-  Future<bool> _signInWithDiscord() async {
-    try {
-      _logInfo('Discord 로그인 시작');
-
-      final response = await SupabaseService.instance.auth.signInWithOAuth(
-        OAuthProvider.discord,
-        redirectTo: _getRedirectUrl(),
-        authScreenLaunchMode: LaunchMode.externalApplication,
-      );
-
-      if (response) {
-        _logInfo('Discord OAuth 요청 성공');
-        return true;
-      } else {
-        throw Exception('Discord 로그인에 실패했습니다.');
-      }
-    } catch (error) {
-      _logError('Discord 로그인 실패: $error');
-      throw Exception('Discord 로그인 중 오류가 발생했습니다: ${error.toString()}');
-    }
-  }
-
-  /// Kakao 소셜 로그인
-  Future<bool> _signInWithKakao() async {
-    try {
-      _logInfo('Kakao 로그인 시작');
+      // ✅ OAuth 플로우 시작 (기존과 동일)
+      _logInfo('🌐 카카오 OAuth 플로우 시작...');
 
       final response = await SupabaseService.instance.auth.signInWithOAuth(
         OAuthProvider.kakao,
@@ -124,30 +122,278 @@ extension SocialLoginExtension on UserProvider {
         authScreenLaunchMode: LaunchMode.externalApplication,
       );
 
-      if (response) {
-        _logInfo('Kakao OAuth 요청 성공');
-        return true;
-      } else {
-        throw Exception('Kakao 로그인에 실패했습니다.');
+      if (!response) {
+        throw Exception('카카오 OAuth 플로우 시작 실패');
       }
+
+      _logInfo('✅ 카카오 OAuth 요청 성공');
+      _logInfo('⏳ 사용자 인증 완료 대기 중... (최대 ${timeout.inMinutes}분)');
+
+      // 🔑 핵심: 실제 로그인 완료까지 대기!
+      final result = await loginCompleter.future;
+
+      _logInfo(result
+          ? '🎉 카카오 로그인 최종 성공!'
+          : '💥 카카오 로그인 최종 실패');
+
+      return result;
+
     } catch (error) {
-      _logError('Kakao 로그인 실패: $error');
-      throw Exception('Kakao 로그인 중 오류가 발생했습니다: ${error.toString()}');
+      _logError('카카오 로그인 실패: $error');
+
+      if (!loginCompleter.isCompleted) {
+        loginCompleter.complete(false);
+      }
+
+      throw Exception('카카오 로그인 중 오류가 발생했습니다: ${error.toString()}');
+
+    } finally {
+      // ✅ 리소스 정리
+      authSubscription?.cancel();
+      timeoutTimer?.cancel();
+      _logInfo('🧹 카카오 로그인 리소스 정리 완료');
     }
   }
 
-  // ==================== 헬퍼 메서드들 ====================
+  /// 🔧 수정된 구글 소셜 로그인
+  Future<bool> _signInWithGoogleFixed(Duration timeout) async {
+    _logInfo('🚀 구글 로그인 시작 (실제 완료까지 대기)');
 
-  /// 리다이렉트 URL 생성
+    final Completer<bool> loginCompleter = Completer<bool>();
+    StreamSubscription<AuthState>? authSubscription;
+    Timer? timeoutTimer;
+
+    try {
+      final initialUser = SupabaseService.instance.auth.currentUser;
+
+      authSubscription = SupabaseService.instance.auth.onAuthStateChange.listen(
+            (AuthState data) {
+          final event = data.event;
+          final session = data.session;
+          final user = session?.user;
+
+          _logInfo('🔐 Google Auth Event 수신: $event');
+
+          if (event == AuthChangeEvent.signedIn &&
+              session != null &&
+              user != null &&
+              user.id != initialUser?.id) {
+
+            _logInfo('🎉 구글 로그인 성공: ${user.email}');
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(true);
+            }
+          }
+          else if (event == AuthChangeEvent.signedOut && initialUser == null) {
+            _logError('❌ 구글 로그인 실패');
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(false);
+            }
+          }
+        },
+        onError: (error) {
+          _logError('구글 Auth 리스너 에러: $error');
+          if (!loginCompleter.isCompleted) {
+            loginCompleter.completeError(error);
+          }
+        },
+      );
+
+      timeoutTimer = Timer(timeout, () {
+        _logError('⏰ 구글 로그인 타임아웃');
+        if (!loginCompleter.isCompleted) {
+          loginCompleter.complete(false);
+        }
+      });
+
+      final response = await SupabaseService.instance.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: _getRedirectUrl(),
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+
+      if (!response) {
+        throw Exception('구글 OAuth 플로우 시작 실패');
+      }
+
+      _logInfo('✅ 구글 OAuth 요청 성공, 인증 완료 대기 중...');
+
+      return await loginCompleter.future;
+
+    } catch (error) {
+      _logError('구글 로그인 실패: $error');
+      if (!loginCompleter.isCompleted) {
+        loginCompleter.complete(false);
+      }
+      throw Exception('구글 로그인 중 오류가 발생했습니다: ${error.toString()}');
+    } finally {
+      authSubscription?.cancel();
+      timeoutTimer?.cancel();
+    }
+  }
+
+  /// 🔧 수정된 애플 소셜 로그인
+  Future<bool> _signInWithAppleFixed(Duration timeout) async {
+    _logInfo('🚀 애플 로그인 시작 (실제 완료까지 대기)');
+
+    final Completer<bool> loginCompleter = Completer<bool>();
+    StreamSubscription<AuthState>? authSubscription;
+    Timer? timeoutTimer;
+
+    try {
+      final initialUser = SupabaseService.instance.auth.currentUser;
+
+      authSubscription = SupabaseService.instance.auth.onAuthStateChange.listen(
+            (AuthState data) {
+          final event = data.event;
+          final session = data.session;
+          final user = session?.user;
+
+          _logInfo('🔐 Apple Auth Event 수신: $event');
+
+          if (event == AuthChangeEvent.signedIn &&
+              session != null &&
+              user != null &&
+              user.id != initialUser?.id) {
+
+            _logInfo('🎉 애플 로그인 성공: ${user.email ?? user.id}');
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(true);
+            }
+          }
+          else if (event == AuthChangeEvent.signedOut && initialUser == null) {
+            _logError('❌ 애플 로그인 실패');
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(false);
+            }
+          }
+        },
+        onError: (error) {
+          _logError('애플 Auth 리스너 에러: $error');
+          if (!loginCompleter.isCompleted) {
+            loginCompleter.completeError(error);
+          }
+        },
+      );
+
+      timeoutTimer = Timer(timeout, () {
+        _logError('⏰ 애플 로그인 타임아웃');
+        if (!loginCompleter.isCompleted) {
+          loginCompleter.complete(false);
+        }
+      });
+
+      final response = await SupabaseService.instance.auth.signInWithOAuth(
+        OAuthProvider.apple,
+        redirectTo: _getRedirectUrl(),
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+
+      if (!response) {
+        throw Exception('애플 OAuth 플로우 시작 실패');
+      }
+
+      _logInfo('✅ 애플 OAuth 요청 성공, 인증 완료 대기 중...');
+
+      return await loginCompleter.future;
+
+    } catch (error) {
+      _logError('애플 로그인 실패: $error');
+      if (!loginCompleter.isCompleted) {
+        loginCompleter.complete(false);
+      }
+      throw Exception('애플 로그인 중 오류가 발생했습니다: ${error.toString()}');
+    } finally {
+      authSubscription?.cancel();
+      timeoutTimer?.cancel();
+    }
+  }
+
+  /// 🔧 수정된 디스코드 소셜 로그인
+  Future<bool> _signInWithDiscordFixed(Duration timeout) async {
+    _logInfo('🚀 디스코드 로그인 시작 (실제 완료까지 대기)');
+
+    final Completer<bool> loginCompleter = Completer<bool>();
+    StreamSubscription<AuthState>? authSubscription;
+    Timer? timeoutTimer;
+
+    try {
+      final initialUser = SupabaseService.instance.auth.currentUser;
+
+      authSubscription = SupabaseService.instance.auth.onAuthStateChange.listen(
+            (AuthState data) {
+          final event = data.event;
+          final session = data.session;
+          final user = session?.user;
+
+          _logInfo('🔐 Discord Auth Event 수신: $event');
+
+          if (event == AuthChangeEvent.signedIn &&
+              session != null &&
+              user != null &&
+              user.id != initialUser?.id) {
+
+            _logInfo('🎉 디스코드 로그인 성공: ${user.email}');
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(true);
+            }
+          }
+          else if (event == AuthChangeEvent.signedOut && initialUser == null) {
+            _logError('❌ 디스코드 로그인 실패');
+            if (!loginCompleter.isCompleted) {
+              loginCompleter.complete(false);
+            }
+          }
+        },
+        onError: (error) {
+          _logError('디스코드 Auth 리스너 에러: $error');
+          if (!loginCompleter.isCompleted) {
+            loginCompleter.completeError(error);
+          }
+        },
+      );
+
+      timeoutTimer = Timer(timeout, () {
+        _logError('⏰ 디스코드 로그인 타임아웃');
+        if (!loginCompleter.isCompleted) {
+          loginCompleter.complete(false);
+        }
+      });
+
+      final response = await SupabaseService.instance.auth.signInWithOAuth(
+        OAuthProvider.discord,
+        redirectTo: _getRedirectUrl(),
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+
+      if (!response) {
+        throw Exception('디스코드 OAuth 플로우 시작 실패');
+      }
+
+      _logInfo('✅ 디스코드 OAuth 요청 성공, 인증 완료 대기 중...');
+
+      return await loginCompleter.future;
+
+    } catch (error) {
+      _logError('디스코드 로그인 실패: $error');
+      if (!loginCompleter.isCompleted) {
+        loginCompleter.complete(false);
+      }
+      throw Exception('디스코드 로그인 중 오류가 발생했습니다: ${error.toString()}');
+    } finally {
+      authSubscription?.cancel();
+      timeoutTimer?.cancel();
+    }
+  }
+
+  // ==================== 기존 헬퍼 메서드들 (유지) ====================
+
+  /// 리디렉트 URL 생성
   String _getRedirectUrl() {
-    // Deep Link URL 반환 (앱으로 돌아오기 위한 URL)
     return 'io.daylit.app://login-callback/';
   }
 
   /// 소셜 로그인 후 사용자 프로필 동기화
-  ///
-  /// OAuth 로그인 성공 후 자동으로 호출되는 메서드
-  /// (AuthStateListener에서 signedIn 이벤트 시 실행)
   Future<void> syncSocialUserProfile() async {
     try {
       final currentUser = SupabaseService.instance.auth.currentUser;
@@ -158,7 +404,7 @@ extension SocialLoginExtension on UserProvider {
 
       _logInfo('소셜 로그인 사용자 프로필 동기화 시작: ${currentUser.email}');
 
-      // Supabase user_profiles 테이블에서 기존 프로필 조회
+      // 기존 프로필 동기화 로직 (변경 없음)
       final existingProfile = await SupabaseService.instance
           .from('user_profiles')
           .select()
@@ -166,11 +412,9 @@ extension SocialLoginExtension on UserProvider {
           .maybeSingle();
 
       if (existingProfile != null) {
-        // 기존 사용자 - 프로필 업데이트
         await _updateExistingSocialProfile(existingProfile, currentUser);
         _logInfo('기존 사용자 프로필 업데이트 완료');
       } else {
-        // 신규 사용자 - 프로필 생성
         await _createNewSocialProfile(currentUser);
         _logInfo('신규 사용자 프로필 생성 완료');
       }
@@ -190,8 +434,6 @@ extension SocialLoginExtension on UserProvider {
     final nickname = _generateNicknameFromEmail(email);
     final socialType = _detectSocialTypeFromProvider(currentUser);
     final profileUrl = _extractProfileImageUrl(currentUser);
-
-    _logInfo('신규 프로필 생성: $email, 소셜타입: $socialType');
 
     final profileData = {
       'uid': currentUser.id,
@@ -215,8 +457,6 @@ extension SocialLoginExtension on UserProvider {
     final now = DateTime.now();
     final profileUrl = _extractProfileImageUrl(currentUser);
 
-    _logInfo('기존 프로필 업데이트: ${currentUser.email}');
-
     final updateData = {
       'last_login': now.toIso8601String(),
       'profile_url': profileUrl ?? existingProfile['profile_url'],
@@ -234,7 +474,6 @@ extension SocialLoginExtension on UserProvider {
     if (email.isEmpty) return 'user${DateTime.now().millisecondsSinceEpoch}';
 
     final username = email.split('@').first;
-    // 특수문자 제거 및 길이 제한
     final cleanUsername = username
         .replaceAll(RegExp(r'[^\w\d]'), '')
         .toLowerCase();
@@ -246,11 +485,9 @@ extension SocialLoginExtension on UserProvider {
 
   /// 소셜 로그인 제공자 감지
   String _detectSocialTypeFromProvider(User currentUser) {
-    // OAuth Provider 정보에서 감지
     final identities = currentUser.identities;
     if (identities != null && identities.isNotEmpty) {
       final provider = identities.first.provider.toLowerCase() ?? '';
-      _logInfo('Provider 감지 (identities): $provider');
       switch (provider) {
         case 'google': return 'google';
         case 'apple': return 'apple';
@@ -260,11 +497,9 @@ extension SocialLoginExtension on UserProvider {
       }
     }
 
-    // 앱 메타데이터에서 감지
     final providers = currentUser.appMetadata?['providers'] as List<dynamic>?;
     if (providers != null && providers.isNotEmpty) {
       final provider = providers.first.toString().toLowerCase();
-      _logInfo('Provider 감지 (appMetadata): $provider');
       switch (provider) {
         case 'google': return 'google';
         case 'apple': return 'apple';
@@ -274,120 +509,84 @@ extension SocialLoginExtension on UserProvider {
       }
     }
 
-    _logInfo('Provider 감지 실패, 기본값(google) 사용');
-    return 'google'; // 기본값
+    return 'google';
   }
 
   /// 프로필 이미지 URL 추출
   String? _extractProfileImageUrl(User currentUser) {
-    // 사용자 메타데이터에서 프로필 이미지 추출
-    final userMetadata = currentUser.userMetadata;
+    // userMetadata에서 프로필 이미지 URL 추출
+    final metadata = currentUser.userMetadata;
 
-    if (userMetadata == null) {
-      _logInfo('사용자 메타데이터가 없습니다.');
-      return null;
-    }
+    // 일반적인 프로필 이미지 키들
+    final imageKeys = ['avatar_url', 'picture', 'profile_image', 'avatar'];
 
-    // 각 소셜별로 다른 필드명 사용
-    final profileImageFields = [
-      'avatar_url',      // Google, Discord
-      'picture',         // Google
-      'photo',           // Apple (때로는 제공되지 않음)
-      'profile_image',   // Kakao
-      'thumbnail_image', // Kakao
-      'profile_image_url', // Kakao 추가
-    ];
-
-    for (final field in profileImageFields) {
-      final imageUrl = userMetadata[field];
-      if (imageUrl != null && imageUrl is String && imageUrl.isNotEmpty) {
-        _logInfo('프로필 이미지 발견: $field = $imageUrl');
-        return imageUrl;
+    for (final key in imageKeys) {
+      final url = metadata?[key];
+      if (url is String && url.isNotEmpty) {
+        return url;
       }
     }
 
-    _logInfo('프로필 이미지를 찾을 수 없습니다. 메타데이터: $userMetadata');
     return null;
   }
 
-  // ==================== 유틸리티 메서드들 ====================
-
-  /// 로딩 상태 관리 안내
-  ///
-  /// 참고: Extension에서는 UserProvider의 private 필드에 접근할 수 없으므로,
-  /// 로딩 상태 관리는 UserProvider 클래스 내부에서 다음과 같이 구현하세요:
-  ///
-  /// ```dart
-  /// Future<bool> signInWithSocialWrapper(Social socialType) async {
-  ///   _setLoading(true);
-  ///   _clearError();
-  ///
-  ///   try {
-  ///     final result = await signInWithSocial(socialType: socialType);
-  ///     if (result) {
-  ///       await syncSocialUserProfile();
-  ///     }
-  ///     return result;
-  ///   } catch (error) {
-  ///     _setError(error.toString());
-  ///     rethrow;
-  ///   } finally {
-  ///     _setLoading(false);
-  ///   }
-  /// }
-  /// ```
-
-  // ==================== 로그 메서드들 ====================
+  // ==================== 로깅 메서드들 ====================
 
   void _logInfo(String message) {
-    print('📱 [SocialLogin] $message');
+    if (kDebugMode) {
+      debugPrint('🔵 [SocialLogin] $message');
+    }
   }
 
   void _logWarning(String message) {
-    print('⚠️ [SocialLogin] $message');
+    if (kDebugMode) {
+      debugPrint('🟡 [SocialLogin] $message');
+    }
   }
 
   void _logError(String message) {
-    print('❌ [SocialLogin] $message');
-  }
-}
-
-// ==================== 소셜 로그인 상태 확장 ====================
-
-/// 소셜 로그인 관련 상태 확장
-extension SocialLoginStateExtension on UserProvider {
-
-  /// 현재 소셜 로그인 타입 반환
-  Social? get currentSocialType {
-    if (!isLoggedIn) return null;
-    return daylitUser?.socialType;
+    if (kDebugMode) {
+      debugPrint('🔴 [SocialLogin] $message');
+    }
   }
 
-  /// 소셜 로그인 사용자인지 확인
-  bool get isSocialLogin {
-    return currentSocialType != null;
+  // ==================== 편의 메서드들 ====================
+
+  /// 현재 로그인 상태 즉시 확인
+  bool get isCurrentlyLoggedIn {
+    final user = SupabaseService.instance.auth.currentUser;
+    final session = SupabaseService.instance.auth.currentSession;
+
+    if (user == null || session == null) return false;
+
+    // 세션 만료 체크
+    if (session.expiresAt != null) {
+      final expiryDate = DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000);
+      if (DateTime.now().isAfter(expiryDate)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  /// 특정 소셜 타입으로 로그인했는지 확인
-  bool isLoggedInWith(Social socialType) {
-    return currentSocialType == socialType;
+  /// 현재 로그인 상태 정보
+  String get currentLoginInfo {
+    final user = SupabaseService.instance.auth.currentUser;
+
+    if (user == null) return '로그인되지 않음';
+
+    final providers = user.appMetadata['providers'] as List<dynamic>?;
+    final provider = providers?.isNotEmpty == true ? providers!.first : 'unknown';
+
+    return '로그인됨: ${user.email ?? user.id} (${provider})';
   }
 
-  /// 소셜 로그인 상태 정보
-  Map<String, dynamic> get socialLoginInfo {
-    final currentUser = SupabaseService.instance.auth.currentUser;
-    return {
-      'isSocialLogin': isSocialLogin,
-      'socialType': currentSocialType?.value,
-      'hasProfileImage': profileImageUrl != null,
-      'provider': currentUser?.identities?.first.provider,
-      'userEmail': currentUser?.email,
-      'userId': currentUser?.id,
-    };
-  }
-
-  /// 현재 Supabase 사용자 정보 (디버깅용)
-  User? get currentSupabaseUser {
-    return SupabaseService.instance.auth.currentUser;
+  /// 빠른 카카오 로그인 (1분 타임아웃)
+  Future<bool> quickSignInWithKakao() async {
+    return await signInWithSocial(
+      socialType: Social.kakao,
+      timeout: const Duration(minutes: 1),
+    );
   }
 }

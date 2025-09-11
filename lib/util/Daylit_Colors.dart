@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-// ==================== 메인 컬러 시스템 ====================
+// ==================== 메인 컬러 시스템 (기존 구조 유지) ====================
 /// DayLit 앱의 전체 컬러 시스템을 관리하는 클래스
 ///
 /// 이 클래스는 다음을 제공합니다:
@@ -47,7 +47,7 @@ class DaylitColors {
   // ==================== 다크 테마 컬러 ====================
   static const _DarkTheme dark = _DarkTheme();
 
-  // ==================== 현재 테마 컬러 반환 ====================
+  // ==================== 현재 테마 컬러 반환 (기존과 동일) ====================
   /// 현재 테마에 맞는 컬러 스킴 반환
   ///
   /// @param context BuildContext (테마 모드 확인용)
@@ -71,12 +71,14 @@ class DaylitColors {
     }
   }
 
-  /// 상태별 컬러 반환 (테마 고려)
+  /// 상태별 컬러 반환 (테마 고려) - 개선된 버전
   ///
   /// @param status 상태 문자열
-  /// @param isDark 다크 테마 여부
+  /// @param context BuildContext (null 안전성 강화)
   /// @returns 상태에 맞는 컬러
-  static Color getStatusColor(String status, {bool isDark = false}) {
+  static Color getStatusColor(String status, {BuildContext? context}) {
+    final isDark = context != null ? Theme.of(context).brightness == Brightness.dark : false;
+
     switch (status.toLowerCase()) {
       case 'success':
       case 'completed':
@@ -95,23 +97,26 @@ class DaylitColors {
     }
   }
 
-  // ==================== 텍스트 스타일 ====================
+  // ==================== 텍스트 스타일 (기존과 동일하되 개선) ====================
   /// 기본 텍스트 스타일 생성
   ///
   /// @param fontSize 폰트 크기
   /// @param fontWeight 폰트 굵기
   /// @param color 텍스트 컬러
+  /// @param height 줄 간격 (추가)
   /// @returns TextStyle 객체
   static TextStyle textStyle({
     required double fontSize,
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
+    double? height,
   }) {
     return TextStyle(
       fontSize: fontSize.sp,
       fontWeight: fontWeight,
       color: color,
       fontFamily: 'pre',
+      height: height,
     );
   }
 
@@ -120,18 +125,21 @@ class DaylitColors {
     fontSize: 32,
     fontWeight: FontWeight.bold,
     color: color,
+    height: 1.2,
   );
 
   static TextStyle heading2({Color? color}) => textStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: color,
+    height: 1.3,
   );
 
   static TextStyle heading3({Color? color}) => textStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: color,
+    height: 1.4,
   );
 
   /// 본문 텍스트 스타일
@@ -139,18 +147,21 @@ class DaylitColors {
     fontSize: 16,
     fontWeight: FontWeight.normal,
     color: color,
+    height: 1.5,
   );
 
   static TextStyle bodyMedium({Color? color}) => textStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: color,
+    height: 1.5,
   );
 
   static TextStyle bodySmall({Color? color}) => textStyle(
     fontSize: 12,
     fontWeight: FontWeight.normal,
     color: color,
+    height: 1.4,
   );
 
   /// 버튼 텍스트 스타일
@@ -158,6 +169,7 @@ class DaylitColors {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: color ?? Colors.white,
+    height: 1.2,
   );
 
   /// 캡션 텍스트 스타일
@@ -165,6 +177,7 @@ class DaylitColors {
     fontSize: 12,
     fontWeight: FontWeight.normal,
     color: color,
+    height: 1.3,
   );
 
   // ==================== 그라데이션 ====================
@@ -247,9 +260,24 @@ class DaylitColors {
     ],
   );
 
-  // ==================== Flutter 테마 데이터 ====================
-  /// 라이트 테마 데이터 생성
+  // ==================== Flutter 테마 데이터 (성능 개선) ====================
+
+  // 테마 캐싱을 위한 정적 변수들
+  static ThemeData? _cachedLightTheme;
+  static ThemeData? _cachedDarkTheme;
+
+  /// 라이트 테마 데이터 생성 (캐싱 적용)
   static ThemeData getLightTheme() {
+    return _cachedLightTheme ??= _createLightTheme();
+  }
+
+  /// 다크 테마 데이터 생성 (캐싱 적용)
+  static ThemeData getDarkTheme() {
+    return _cachedDarkTheme ??= _createDarkTheme();
+  }
+
+  /// 라이트 테마 생성 (내부 함수)
+  static ThemeData _createLightTheme() {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -259,12 +287,10 @@ class DaylitColors {
         primary: brandPrimary,
         secondary: brandSecondary,
         surface: light.surface,
-        background: light.background,
         error: error,
         onPrimary: Colors.white,
         onSecondary: light.textPrimary,
         onSurface: light.textPrimary,
-        onBackground: light.textPrimary,
         onError: Colors.white,
       ),
 
@@ -308,8 +334,8 @@ class DaylitColors {
     );
   }
 
-  /// 다크 테마 데이터 생성
-  static ThemeData getDarkTheme() {
+  /// 다크 테마 생성 (내부 함수)
+  static ThemeData _createDarkTheme() {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -319,12 +345,10 @@ class DaylitColors {
         primary: brandSecondary,
         secondary: brandPrimary,
         surface: dark.surface,
-        background: dark.background,
         error: errorDark,
         onPrimary: dark.textPrimary,
         onSecondary: dark.textPrimary,
         onSurface: dark.textPrimary,
-        onBackground: dark.textPrimary,
         onError: Colors.white,
       ),
 
@@ -368,7 +392,7 @@ class DaylitColors {
     );
   }
 
-  /// 텍스트 테마 생성
+  /// 텍스트 테마 생성 (기존과 동일)
   static TextTheme _buildTextTheme(dynamic colorScheme) {
     return TextTheme(
       displayLarge: heading1(color: colorScheme.textPrimary),
@@ -388,9 +412,15 @@ class DaylitColors {
       labelSmall: caption(color: colorScheme.textSecondary),
     );
   }
+
+  /// 테마 캐시 초기화 (메모리 정리용)
+  static void clearCache() {
+    _cachedLightTheme = null;
+    _cachedDarkTheme = null;
+  }
 }
 
-// ==================== 라이트 테마 컬러 정의 ====================
+// ==================== 라이트 테마 컬러 정의 (기존 구조 유지) ====================
 /// 라이트 테마에서 사용되는 컬러들
 class _LightTheme {
   const _LightTheme();
@@ -400,6 +430,11 @@ class _LightTheme {
   Color get surface => const Color(0xFFFFFFFF);
   Color get cardBackground => const Color(0xFFFFFFFF);
 
+  // 기본 브랜드 색상 (추가)
+  Color get primary => DaylitColors.brandPrimary;
+  Color get secondary => DaylitColors.brandSecondary;
+  Color get accent => DaylitColors.brandAccent;
+
   // 텍스트 관련
   Color get textPrimary => const Color(0xFF1F2937);
   Color get textSecondary => const Color(0xFF6B7280);
@@ -408,8 +443,8 @@ class _LightTheme {
   // UI 요소
   Color get divider => const Color(0xFFE5E7EB);
   Color get border => const Color(0xFFD1D5DB);
-  Color get shadow => DaylitColors.brandPrimary.withValues(alpha: 0.1);
-  Color get overlay => const Color(0xFF000000).withValues(alpha: 0.5);
+  Color get shadow => DaylitColors.brandPrimary.withOpacity(0.1);
+  Color get overlay => const Color(0xFF000000).withOpacity(0.5);
   Color get disabled => const Color(0xFF9CA3AF);
 
   // 그라데이션
@@ -421,7 +456,7 @@ class _LightTheme {
   );
 }
 
-// ==================== 다크 테마 컬러 정의 ====================
+// ==================== 다크 테마 컬러 정의 (기존 구조 유지) ====================
 /// 다크 테마에서 사용되는 컬러들
 class _DarkTheme {
   const _DarkTheme();
@@ -431,6 +466,11 @@ class _DarkTheme {
   Color get surface => const Color(0xFF1E293B);
   Color get cardBackground => const Color(0xFF1E293B);
 
+  // 기본 브랜드 색상 (다크 테마에서는 조금 더 밝게)
+  Color get primary => DaylitColors.brandSecondary; // 다크에서는 더 밝은 색상
+  Color get secondary => DaylitColors.brandPrimary;
+  Color get accent => DaylitColors.brandAccent;
+
   // 텍스트 관련
   Color get textPrimary => const Color(0xFFE2E8F0);
   Color get textSecondary => const Color(0xFF94A3B8);
@@ -439,8 +479,8 @@ class _DarkTheme {
   // UI 요소
   Color get divider => const Color(0xFF334155);
   Color get border => const Color(0xFF475569);
-  Color get shadow => const Color(0xFF000000).withValues(alpha: 0.3);
-  Color get overlay => const Color(0xFF000000).withValues(alpha: 0.7);
+  Color get shadow => const Color(0xFF000000).withOpacity(0.3);
+  Color get overlay => const Color(0xFF000000).withOpacity(0.7);
   Color get disabled => const Color(0xFF64748B);
 
   // 그라데이션
@@ -452,7 +492,7 @@ class _DarkTheme {
   );
 }
 
-// ==================== 편의 Extension ====================
+// ==================== 편의 Extension (기존과 동일) ====================
 /// BuildContext를 통한 간편한 컬러 접근
 extension DaylitColorsExtension on BuildContext {
   /// 현재 테마의 컬러 스킴 반환
@@ -466,11 +506,11 @@ extension DaylitColorsExtension on BuildContext {
   Color get brandSecondary => DaylitColors.brandSecondary;
   Color get brandAccent => DaylitColors.brandAccent;
 
-  /// 상태 컬러들 빠른 접근
-  Color get successColor => DaylitColors.success;
-  Color get warningColor => DaylitColors.warning;
-  Color get errorColor => DaylitColors.error;
-  Color get infoColor => DaylitColors.info;
+  /// 상태 컬러들 빠른 접근 (컨텍스트 고려)
+  Color get successColor => DaylitColors.getStatusColor('success', context: this);
+  Color get warningColor => DaylitColors.getStatusColor('warning', context: this);
+  Color get errorColor => DaylitColors.getStatusColor('error', context: this);
+  Color get infoColor => DaylitColors.getStatusColor('info', context: this);
 
   /// 그라데이션들 빠른 접근
   LinearGradient get brandGradient => DaylitColors.brandGradient;
@@ -486,7 +526,7 @@ extension DaylitColorsExtension on BuildContext {
   LinearGradient get softDisabledGradient => DaylitColors.getDisabledGradient(this, soft: true);
 }
 
-// ==================== 컬러 유틸리티 ====================
+// ==================== 컬러 유틸리티 (기존과 동일하되 개선) ====================
 /// 컬러 관련 유틸리티 함수들
 class ColorUtils {
   ColorUtils._();
@@ -496,18 +536,31 @@ class ColorUtils {
   /// @param color 변환할 컬러
   /// @returns Hex 문자열 (#RRGGBB 형식)
   static String toHex(Color color) {
-    return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+    return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
   }
 
-  /// Hex 문자열을 컬러로 변환
+  /// Hex 문자열을 컬러로 변환 (에러 처리 강화)
   ///
   /// @param hexString Hex 문자열
   /// @returns Color 객체
+  /// @throws ArgumentError 잘못된 형식인 경우
   static Color fromHex(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
+    String hex = hexString.replaceFirst('#', '');
+
+    if (hex.length == 6) {
+      hex = 'ff$hex'; // 알파 채널 추가
+    }
+
+    if (hex.length != 8) {
+      throw ArgumentError('잘못된 Hex 색상 형식: $hexString (올바른 형식: #RRGGBB 또는 RRGGBB)');
+    }
+
+    final intValue = int.tryParse(hex, radix: 16);
+    if (intValue == null) {
+      throw ArgumentError('유효하지 않은 Hex 값: $hexString');
+    }
+
+    return Color(intValue);
   }
 
   /// 컬러 밝기 계산
@@ -531,6 +584,15 @@ class ColorUtils {
   /// @param backgroundColor 배경 컬러
   /// @returns 텍스트 컬러 (검은색 또는 흰색)
   static Color getTextColorForBackground(Color backgroundColor) {
-    return isLightColor(backgroundColor) ? Colors.black : Colors.white;
+    return isLightColor(backgroundColor) ? Colors.black87 : Colors.white;
+  }
+
+  /// 컬러 투명도 안전하게 적용
+  ///
+  /// @param color 원본 컬러
+  /// @param opacity 투명도 (0.0 ~ 1.0)
+  /// @returns 투명도가 적용된 컬러
+  static Color withOpacity(Color color, double opacity) {
+    return color.withOpacity(opacity.clamp(0.0, 1.0));
   }
 }
