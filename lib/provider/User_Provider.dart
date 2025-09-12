@@ -125,9 +125,6 @@ class UserProvider extends ChangeNotifier {
   }
 
   /// 현재 세션 확인
-  ///
-  /// 참고: Supabase v2에서는 initialSession 이벤트가 자동으로 발생하므로
-  /// 이 메서드는 보조적인 역할을 합니다.
   void _checkCurrentSession() {
     try {
       if (!SupabaseService.instance.isInitialized) return;
@@ -136,13 +133,10 @@ class UserProvider extends ChangeNotifier {
       final user = SupabaseService.instance.currentUser;
 
       if (session != null && user != null) {
-        // initialSession 이벤트에서 처리되지 않은 경우를 위한 백업 로직
         _currentSession = session;
         _supabaseUser = user;
 
         _logInfo('기존 세션 확인됨 (백업 로직): ${user.email}');
-
-        // DayLit 사용자 정보 로드
         _loadDaylitUserProfile();
       } else {
         _logInfo('기존 세션 없음');
@@ -163,7 +157,7 @@ class UserProvider extends ChangeNotifier {
 
       _logInfo('초기 세션 복원: ${_supabaseUser!.email}');
 
-      // DayLit 사용자 정보 로드
+      // DayLit 사용자 정보 로드 (중복 방지 로직 포함)
       await _loadDaylitUserProfile();
 
       notifyListeners();
@@ -181,7 +175,7 @@ class UserProvider extends ChangeNotifier {
 
       _logInfo('로그인 성공: ${_supabaseUser!.email}');
 
-      // DayLit 사용자 정보 로드
+      // DayLit 사용자 정보 로드 (중복 방지 로직 포함)
       await _loadDaylitUserProfile();
 
       notifyListeners();
@@ -214,8 +208,13 @@ class UserProvider extends ChangeNotifier {
       _supabaseUser = session!.user;
       _logInfo('사용자 정보 업데이트됨');
 
-      // DayLit 사용자 정보 다시 로드
-      await _loadDaylitUserProfile();
+      // 이미 로드된 프로필이 있고 같은 사용자인 경우 재로드하지 않음
+      if (daylitUser == null || daylitUser!.uid != _supabaseUser!.id) {
+        await _loadDaylitUserProfile();
+      } else {
+        _logInfo('동일 사용자 정보 업데이트 - 프로필 재로드 생략');
+      }
+
       notifyListeners();
     }
   }
@@ -227,6 +226,14 @@ class UserProvider extends ChangeNotifier {
     try {
       if (_supabaseUser == null) return;
 
+      // 이미 프로필이 로드되어 있고 같은 사용자인 경우 중복 로드 방지
+      if (daylitUser != null && daylitUser!.uid == _supabaseUser!.id) {
+        _logInfo('이미 로드된 프로필 존재: ${daylitUser!.id}');
+        return;
+      }
+
+      _logInfo('프로필 로드 시작: ${_supabaseUser!.id}');
+
       // user_profiles 테이블에서 DayLit 사용자 정보 조회
       final response = await SupabaseService.instance
           .from('user_profiles')
@@ -234,42 +241,85 @@ class UserProvider extends ChangeNotifier {
           .eq('uid', _supabaseUser!.id)
           .maybeSingle();
 
-      if (response != null) {
+      if (response != null && response.isNotEmpty) {
         // 기존 UserModel 생성
         daylitUser = UserModel.fromJson(response);
         _logInfo('DayLit 사용자 프로필 로드 성공: ${daylitUser!.id}');
       } else {
-        // 프로필이 없으면 기본 프로필 생성
+        // 프로필이 없는 경우에만 새로 생성
+        _logInfo('프로필이 존재하지 않음. 새 프로필 생성 시작');
         await _createDefaultDaylitProfile();
       }
 
       notifyListeners();
     } catch (e) {
       _logError('DayLit 사용자 프로필 로드 실패: $e');
-      // 프로필 로드 실패 시 기본값 사용
-      daylitUser = _createFallbackUserModel();
-      notifyListeners();
+      // 프로필 로드 실패 시 기본값 사용 (프로필 생성 시도하지 않음)
+      if (daylitUser == null) {
+        daylitUser = _createFallbackUserModel();
+        notifyListeners();
+      }
     }
   }
 
-  /// 기본 DayLit 프로필 생성
+  /// 기본 DayLit 프로필 생성 (중복 체크 강화)
   Future<void> _createDefaultDaylitProfile() async {
     try {
+      if (_supabaseUser == null) {
+        throw Exception('사용자 정보가 없습니다.');
+      }
+
+      // 프로필 생성 전 한 번 더 중복 체크
+      final existingProfile = await SupabaseService.instance
+          .from('user_profiles')
+          .select('uid')
+          .eq('uid', _supabaseUser!.id)
+          .maybeSingle();
+
+      if (existingProfile != null) {
+        _logWarning('프로필이 이미 존재합니다. 생성을 건너뜁니다: ${_supabaseUser!.id}');
+        // 기존 프로필을 다시 로드
+        await _loadDaylitUserProfile();
+        return;
+      }
+
       final defaultProfile = _getDefaultProfileData();
 
+      // upsert 대신 insert 사용하되, 충돌 시 무시
       await SupabaseService.instance
           .from('user_profiles')
-          .insert(defaultProfile);
+          .insert(defaultProfile)
+          .select()
+          .single();
 
       daylitUser = UserModel.fromJson(defaultProfile);
       _logInfo('기본 DayLit 프로필 생성 완료: ${daylitUser!.id}');
     } catch (e) {
+      // PostgrestException의 경우 중복 키 에러인지 확인
+      if (e.toString().contains('duplicate key value violates unique constraint')) {
+        _logWarning('프로필이 이미 존재합니다 (중복 키): ${_supabaseUser!.id}');
+        // 기존 프로필을 로드 시도
+        try {
+          final response = await SupabaseService.instance
+              .from('user_profiles')
+              .select()
+              .eq('uid', _supabaseUser!.id)
+              .single();
+
+          daylitUser = UserModel.fromJson(response);
+          _logInfo('기존 프로필 재로드 성공: ${daylitUser!.id}');
+          return;
+        } catch (loadError) {
+          _logError('기존 프로필 재로드 실패: $loadError');
+        }
+      }
+
       _logError('기본 DayLit 프로필 생성 실패: $e');
       daylitUser = _createFallbackUserModel();
     }
   }
 
-  /// 기본 프로필 데이터 생성
+  /// 기본 프로필 데이터 생성 (camelCase 사용)
   Map<String, dynamic> _getDefaultProfileData() {
     final now = DateTime.now();
     final email = _supabaseUser!.email!;
@@ -288,7 +338,7 @@ class UserProvider extends ChangeNotifier {
     };
   }
 
-  /// 소셜 로그인 타입 감지 (Provider 기반)
+  /// 소셜 로그인 타입 감지 (카카오 추가)
   String _detectSocialTypeFromProvider() {
     final providers = _supabaseUser?.appMetadata?['providers'] as List<dynamic>?;
 
@@ -298,7 +348,8 @@ class UserProvider extends ChangeNotifier {
         case 'google': return 'google';
         case 'apple': return 'apple';
         case 'discord': return 'discord';
-        default: return 'google'; // 기본값
+        case 'kakao': return 'kakao';  // ⚠️ 추가: 누락된 카카오 처리
+        default: return 'google';
       }
     }
 
@@ -310,25 +361,28 @@ class UserProvider extends ChangeNotifier {
         case 'google': return 'google';
         case 'apple': return 'apple';
         case 'discord': return 'discord';
+        case 'kakao': return 'kakao';  // ⚠️ 추가: 누락된 카카오 처리
         default: return 'google';
       }
     }
 
-    return 'google'; // 기본값
+    return 'google';
   }
 
-  /// 폴백용 UserModel 생성 (Supabase 연결 실패 시)
+  /// 폴백 사용자 모델 생성 (프로필 생성/로드 실패 시)
   UserModel _createFallbackUserModel() {
     final now = DateTime.now();
+    final email = _supabaseUser?.email ?? '';
+    final nickname = email.isNotEmpty ? email.split('@').first : 'user';
+
     return UserModel(
       uid: _supabaseUser?.id ?? '',
-      id: _supabaseUser?.email?.split('@').first ?? 'user',
+      id: nickname,
       socialType: Social.google,
-      email: _supabaseUser?.email ?? '',
+      email: email,
       lastLogin: now,
-      gender: null,
-      level: 1,
       createAt: now,
+      level: 1,
       profileUrl: _supabaseUser?.userMetadata?['avatar_url'],
     );
   }
@@ -468,7 +522,7 @@ class UserProvider extends ChangeNotifier {
 
   // ==================== 프로필 업데이트 ====================
 
-  /// DayLit 사용자 프로필 업데이트
+  /// DayLit 사용자 프로필 업데이트 (camelCase 사용)
   Future<bool> updateDaylitProfile({
     String? nickname,
     String? gender,
@@ -589,22 +643,4 @@ extension UserProviderExtensions on UserProvider {
 
   /// 성별 설정 여부
   bool get hasGender => daylitUser?.hasGender ?? false;
-
-  /// 프로필 완성도 (0-100)
-  int get profileCompleteness {
-    if (daylitUser == null) return 0;
-
-    int completedFields = 0;
-    int totalFields = 4;
-
-    if (daylitUser!.id != null && daylitUser!.id!.isNotEmpty) completedFields++;
-    if (daylitUser!.email.isNotEmpty) completedFields++;
-    if (daylitUser!.gender != null) completedFields++;
-    if (daylitUser!.profileUrl != null) completedFields++;
-
-    return ((completedFields / totalFields) * 100).round();
-  }
-
-  /// 레벨업 가능 여부 (예시 로직)
-  bool get canLevelUp => daylitUser != null && daysSinceJoined >= (userLevel * 7);
 }
