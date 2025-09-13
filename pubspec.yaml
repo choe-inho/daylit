@@ -57,15 +57,19 @@ dependencies:
 
   #로컬저장소
   shared_preferences:
+  hive:
+  hive_flutter:
 
   #앱 정보 불러오기
   package_info_plus:
 
   #인터넷 관련
+  connectivity_plus:
   url_launcher:
 
   #환경변수 관리
   flutter_dotenv:
+
 
 dev_dependencies:
   flutter_test:
@@ -77,7 +81,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-
+  hive_generator:
+  build_runner:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

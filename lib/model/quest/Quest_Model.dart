@@ -1,20 +1,48 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:hive/hive.dart';
+
 import '../../util/DateTime_Utils.dart';
 import '../../util/Routine_Utils.dart';
 
-/// 전체 루틴 정보 모델
-class QuestModel {
+part 'Quest_Model.g.dart'; // build_runner로 생성될 파일
+
+/// 전체 루틴 정보 모델 (Hive 캐시 지원)
+@HiveType(typeId: 0)
+class QuestModel extends HiveObject {
+  @HiveField(0)
   final String qid;                    // 루틴 ID
+
+  @HiveField(1)
   final String uid;                 // 사용자 ID
+
+  @HiveField(2)
   final String purpose;                // 목적 (200자 제한)
+
+  @HiveField(3)
   final String constraints;            // 제약상항 (100자 제한)
+
+  @HiveField(4)
   final int totalDays;                 // 총 루틴 일수
+
+  @HiveField(5)
   final int totalCost;                 // 총 비용 (릿)
+
+  @HiveField(6)
   final RoutineStatus status;          // 루틴 상태
+
+  @HiveField(7)
   final DateTime startDate;            // 시작일
+
+  @HiveField(8)
   final DateTime endDate;              // 종료일
+
+  @HiveField(9)
   final DateTime createdAt;            // 생성일
+
+  @HiveField(10)
   final DateTime? completedAt;         // 완료일
+
+  @HiveField(11)
   final Map<String, dynamic>? aiRequestData;  // AI 요청 데이터 저장용
 
   QuestModel({
@@ -64,7 +92,7 @@ class QuestModel {
   /// Supabase에서 반환된 JSON으로부터 QuestModel 생성
   ///
   /// SQL 스키마의 camelCase 컬럼명과 매핑:
-  /// - "totalDays", "totalCost", "startDate", "endDate" 등
+  /// - "totalDays", "totalCost", "startDate", "endDate" 등 - 
   factory QuestModel.fromSupabaseJson(Map<String, dynamic> json) {
     return QuestModel(
       qid: json['qid'] ?? '',
@@ -139,6 +167,16 @@ class QuestModel {
       'ai_request_data': aiRequestData,
     };
   }
+
+  // ==================== 캐시 키 생성 (Hive 캐시용) ====================
+  /// 개별 퀘스트 캐시 키
+  String get cacheKey => 'quest_$qid';
+
+  /// 사용자별 퀘스트 목록 캐시 키
+  static String userQuestsCacheKey(String userId) => 'user_quests_$userId';
+
+  /// 활성 퀘스트 캐시 키  
+  static String activeQuestsCacheKey(String userId) => 'active_quests_$userId';
 
   // ==================== 복사 메서드 ====================
 
@@ -304,24 +342,24 @@ class QuestModel {
   /// 디버그용 상세 정보
   String toDebugString() {
     return '''
-QuestModel Debug Info:
-  qid: $qid
-  uid: $uid
-  purpose: $purpose
-  constraints: $constraints
-  totalDays: $totalDays
-  totalCost: $totalCost
-  status: $status (${statusDisplayName})
-  startDate: ${_formatDateForSupabase(startDate)}
-  endDate: ${_formatDateForSupabase(endDate)}
-  createdAt: $createdAt
-  completedAt: $completedAt
-  daysRemaining: $daysRemaining
-  progressPercent: ${progressPercent.toStringAsFixed(1)}%
-  isActive: $isActive
-  isOngoing: $isOngoing
-  isUpcoming: $isUpcoming
-  isExpired: $isExpired
-    ''';
+      QuestModel Debug Info:
+        qid: $qid
+        uid: $uid
+        purpose: $purpose
+        constraints: $constraints
+        totalDays: $totalDays
+        totalCost: $totalCost
+        status: $status (${statusDisplayName})
+        startDate: ${_formatDateForSupabase(startDate)}
+        endDate: ${_formatDateForSupabase(endDate)}
+        createdAt: $createdAt
+        completedAt: $completedAt
+        daysRemaining: $daysRemaining
+        progressPercent: ${progressPercent.toStringAsFixed(1)}%
+        isActive: $isActive
+        isOngoing: $isOngoing
+        isUpcoming: $isUpcoming
+        isExpired: $isExpired
+          ''';
   }
 }

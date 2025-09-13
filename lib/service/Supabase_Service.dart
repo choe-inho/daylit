@@ -188,7 +188,8 @@ class SupabaseService {
         ),
         realtimeClientOptions: RealtimeClientOptions(
           logLevel: kDebugMode ? RealtimeLogLevel.info : RealtimeLogLevel.error,
-          timeout: const Duration(seconds: 10),
+          timeout: const Duration(seconds: 30),
+          eventsPerSecond: 10
         ),
         storageOptions: StorageClientOptions(
           retryAttempts: storageRetryAttempts,

@@ -1,289 +1,373 @@
-// ==================== 열거형들 ====================
+import 'package:hive/hive.dart'; // 🚀 Hive 추가
 
-/// 루틴 상태 (SQL 스키마와 일치)
+part 'Routine_Utils.g.dart'; // 🚀 build_runner로 생성될 파일
+
+// ==================== 🚀 루틴 상태 enum (Hive 캐시 지원) ====================
+/// 루틴 상태 enum
+@HiveType(typeId: 1) // 🚀 Hive 타입 어노테이션 (QuestModel은 0번이므로 1번 사용)
 enum RoutineStatus {
-  creating('creating'),    // AI 생성 중
-  active('active'),       // 진행 중
-  paused('paused'),       // 일시 정지
-  completed('completed'), // 완료
-  failed('failed'),       // 실패
-  cancelled('cancelled'); // 취소됨
+  @HiveField(0)
+  creating('creating'),     // AI 생성 중
+
+  @HiveField(1)
+  active('active'),         // 활성 상태
+
+  @HiveField(2)
+  paused('paused'),         // 일시정지
+
+  @HiveField(3)
+  completed('completed'),   // 완료
+
+  @HiveField(4)
+  failed('failed'),         // 실패
+
+  @HiveField(5)
+  cancelled('cancelled');   // 취소
 
   const RoutineStatus(this.value);
   final String value;
 
+  /// 문자열에서 RoutineStatus 변환
+  static RoutineStatus fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'creating':
+        return RoutineStatus.creating;
+      case 'active':
+        return RoutineStatus.active;
+      case 'paused':
+        return RoutineStatus.paused;
+      case 'completed':
+        return RoutineStatus.completed;
+      case 'failed':
+        return RoutineStatus.failed;
+      case 'cancelled':
+        return RoutineStatus.cancelled;
+      default:
+        return RoutineStatus.active; // 기본값
+    }
+  }
+
+  /// 표시용 문자열
   String get displayName {
     switch (this) {
-      case RoutineStatus.creating: return 'AI 생성 중';
-      case RoutineStatus.active: return '진행 중';
-      case RoutineStatus.paused: return '일시정지';
-      case RoutineStatus.completed: return '완료';
-      case RoutineStatus.failed: return '실패';
-      case RoutineStatus.cancelled: return '취소됨';
+      case RoutineStatus.creating:
+        return 'AI 생성 중';
+      case RoutineStatus.active:
+        return '진행 중';
+      case RoutineStatus.paused:
+        return '일시정지';
+      case RoutineStatus.completed:
+        return '완료';
+      case RoutineStatus.failed:
+        return '실패';
+      case RoutineStatus.cancelled:
+        return '취소됨';
     }
   }
 
-  /// 상태 아이콘
-  String get icon {
-    switch (this) {
-      case RoutineStatus.creating: return '🔄';
-      case RoutineStatus.active: return '🎯';
-      case RoutineStatus.paused: return '⏸️';
-      case RoutineStatus.completed: return '✅';
-      case RoutineStatus.failed: return '❌';
-      case RoutineStatus.cancelled: return '🚫';
-    }
-  }
-
-  /// 상태별 색상 (Material Colors)
+  /// 상태에 따른 색상 (UI용)
   String get colorHex {
     switch (this) {
-      case RoutineStatus.creating: return '#FF9800'; // Orange
-      case RoutineStatus.active: return '#4CAF50';   // Green
-      case RoutineStatus.paused: return '#FFC107';   // Amber
-      case RoutineStatus.completed: return '#2196F3'; // Blue
-      case RoutineStatus.failed: return '#F44336';   // Red
-      case RoutineStatus.cancelled: return '#9E9E9E'; // Grey
+      case RoutineStatus.creating:
+        return '#FFA500'; // 주황색
+      case RoutineStatus.active:
+        return '#4CAF50'; // 초록색
+      case RoutineStatus.paused:
+        return '#FF9800'; // 노란색
+      case RoutineStatus.completed:
+        return '#2196F3'; // 파란색
+      case RoutineStatus.failed:
+        return '#F44336'; // 빨간색
+      case RoutineStatus.cancelled:
+        return '#9E9E9E'; // 회색
     }
   }
 
-  /// 완료 상태인지 확인
-  bool get isFinished => this == RoutineStatus.completed ||
-      this == RoutineStatus.failed ||
-      this == RoutineStatus.cancelled;
+  /// 상태 아이콘 (UI용)
+  String get iconName {
+    switch (this) {
+      case RoutineStatus.creating:
+        return 'auto_awesome'; // AI 생성 중
+      case RoutineStatus.active:
+        return 'play_circle'; // 진행 중
+      case RoutineStatus.paused:
+        return 'pause_circle'; // 일시정지
+      case RoutineStatus.completed:
+        return 'check_circle'; // 완료
+      case RoutineStatus.failed:
+        return 'error'; // 실패
+      case RoutineStatus.cancelled:
+        return 'cancel'; // 취소
+    }
+  }
 
-  /// 진행 가능한 상태인지 확인
-  bool get isProgressive => this == RoutineStatus.active;
+  /// 상태가 활성 상태인지 확인
+  bool get isActive => this == RoutineStatus.active;
 
-  /// 수정 가능한 상태인지 확인
-  bool get isEditable => this == RoutineStatus.creating ||
-      this == RoutineStatus.paused;
+  /// 상태가 완료 상태인지 확인
+  bool get isCompleted => this == RoutineStatus.completed;
+
+  /// 상태가 진행 중인지 확인 (creating, active, paused)
+  bool get isInProgress =>
+      this == RoutineStatus.creating ||
+          this == RoutineStatus.active ||
+          this == RoutineStatus.paused;
+
+  /// 상태가 종료된 상태인지 확인 (completed, failed, cancelled)
+  bool get isFinished =>
+      this == RoutineStatus.completed ||
+          this == RoutineStatus.failed ||
+          this == RoutineStatus.cancelled;
 }
 
+// ==================== 🚀 퀘스트 기록 상태 enum ====================
+/// 퀘스트 실행 기록 상태
+@HiveType(typeId: 2)
+enum RecordStatus {
+  @HiveField(0)
+  success('success'),       // 성공
+
+  @HiveField(1)
+  failed('failed'),         // 실패
+
+  @HiveField(2)
+  skipped('skipped'),       // 건너뜀
+
+  @HiveField(3)
+  partial('partial');       // 부분 완료
+
+  const RecordStatus(this.value);
+  final String value;
+
+  /// 문자열에서 RecordStatus 변환
+  static RecordStatus fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'success':
+        return RecordStatus.success;
+      case 'failed':
+        return RecordStatus.failed;
+      case 'skipped':
+        return RecordStatus.skipped;
+      case 'partial':
+        return RecordStatus.partial;
+      default:
+        return RecordStatus.failed; // 기본값
+    }
+  }
+
+  /// 표시용 문자열
+  String get displayName {
+    switch (this) {
+      case RecordStatus.success:
+        return '성공';
+      case RecordStatus.failed:
+        return '실패';
+      case RecordStatus.skipped:
+        return '건너뜀';
+      case RecordStatus.partial:
+        return '부분 완료';
+    }
+  }
+
+  /// 상태에 따른 색상 (UI용)
+  String get colorHex {
+    switch (this) {
+      case RecordStatus.success:
+        return '#4CAF50'; // 초록색
+      case RecordStatus.partial:
+        return '#FF9800'; // 주황색
+      case RecordStatus.skipped:
+        return '#9E9E9E'; // 회색
+      case RecordStatus.failed:
+        return '#F44336'; // 빨간색
+    }
+  }
+
+  /// 상태 아이콘 (UI용)
+  String get iconName {
+    switch (this) {
+      case RecordStatus.success:
+        return 'check_circle';
+      case RecordStatus.partial:
+        return 'radio_button_checked';
+      case RecordStatus.skipped:
+        return 'skip_next';
+      case RecordStatus.failed:
+        return 'cancel';
+    }
+  }
+
+  /// 성공한 기록인지 확인
+  bool get isSuccess => this == RecordStatus.success;
+
+  /// 실패한 기록인지 확인
+  bool get isFailed => this == RecordStatus.failed;
+
+  /// 건너뛴 기록인지 확인
+  bool get isSkipped => this == RecordStatus.skipped;
+
+  /// 부분 완료 기록인지 확인
+  bool get isPartial => this == RecordStatus.partial;
+
+  /// 점수 계산용 가중치
+  double get scoreWeight {
+    switch (this) {
+      case RecordStatus.success:
+        return 1.0;
+      case RecordStatus.partial:
+        return 0.5;
+      case RecordStatus.skipped:
+        return 0.0;
+      case RecordStatus.failed:
+        return 0.0;
+    }
+  }
+}
+
+// ==================== 🚀 미션 난이도 enum ====================
 /// 미션 난이도
+@HiveType(typeId: 3)
 enum MissionDifficulty {
-  easy('easy'),
-  medium('medium'),
-  hard('hard');
+  @HiveField(0)
+  easy('easy'),       // 쉬움
+
+  @HiveField(1)
+  medium('medium'),   // 보통
+
+  @HiveField(2)
+  hard('hard');       // 어려움
 
   const MissionDifficulty(this.value);
   final String value;
 
-  String get displayName {
-    switch (this) {
-      case MissionDifficulty.easy: return '쉬움';
-      case MissionDifficulty.medium: return '보통';
-      case MissionDifficulty.hard: return '어려움';
+  /// 문자열에서 MissionDifficulty 변환
+  static MissionDifficulty fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'easy':
+        return MissionDifficulty.easy;
+      case 'medium':
+        return MissionDifficulty.medium;
+      case 'hard':
+        return MissionDifficulty.hard;
+      default:
+        return MissionDifficulty.medium; // 기본값
     }
   }
 
-  /// 난이도별 아이콘
-  String get icon {
+  /// 표시용 문자열
+  String get displayName {
     switch (this) {
-      case MissionDifficulty.easy: return '🟢';
-      case MissionDifficulty.medium: return '🟡';
-      case MissionDifficulty.hard: return '🔴';
+      case MissionDifficulty.easy:
+        return '쉬움';
+      case MissionDifficulty.medium:
+        return '보통';
+      case MissionDifficulty.hard:
+        return '어려움';
     }
   }
 
   /// 난이도별 색상
   String get colorHex {
     switch (this) {
-      case MissionDifficulty.easy: return '#4CAF50';   // Green
-      case MissionDifficulty.medium: return '#FF9800'; // Orange
-      case MissionDifficulty.hard: return '#F44336';   // Red
+      case MissionDifficulty.easy:
+        return '#4CAF50'; // 초록색
+      case MissionDifficulty.medium:
+        return '#FF9800'; // 주황색
+      case MissionDifficulty.hard:
+        return '#F44336'; // 빨간색
     }
   }
 
-  /// 예상 소요 시간 배수
-  double get timeMultiplier {
+  /// 난이도별 예상 시간 (분)
+  int get estimatedMinutes {
     switch (this) {
-      case MissionDifficulty.easy: return 0.8;
-      case MissionDifficulty.medium: return 1.0;
-      case MissionDifficulty.hard: return 1.5;
+      case MissionDifficulty.easy:
+        return 15;
+      case MissionDifficulty.medium:
+        return 30;
+      case MissionDifficulty.hard:
+        return 60;
     }
   }
 }
 
-/// 실행 기록 상태
-enum RecordStatus {
-  success('success'),     // 성공
-  failed('failed'),       // 실패
-  skipped('skipped'),     // 건너뜀
-  partial('partial');     // 부분 완료
-
-  const RecordStatus(this.value);
-  final String value;
-
-  String get displayName {
-    switch (this) {
-      case RecordStatus.success: return '성공';
-      case RecordStatus.failed: return '실패';
-      case RecordStatus.skipped: return '건너뜀';
-      case RecordStatus.partial: return '부분 완료';
-    }
-  }
-
-  /// 기록별 아이콘
-  String get icon {
-    switch (this) {
-      case RecordStatus.success: return '✅';
-      case RecordStatus.failed: return '❌';
-      case RecordStatus.skipped: return '⏭️';
-      case RecordStatus.partial: return '🔶';
-    }
-  }
-
-  /// 기록별 색상
-  String get colorHex {
-    switch (this) {
-      case RecordStatus.success: return '#4CAF50';   // Green
-      case RecordStatus.failed: return '#F44336';    // Red
-      case RecordStatus.skipped: return '#9E9E9E';   // Grey
-      case RecordStatus.partial: return '#FF9800';   // Orange
-    }
-  }
-
-  /// 성공적인 기록인지 확인
-  bool get isSuccessful => this == RecordStatus.success ||
-      this == RecordStatus.partial;
+// ==================== 헬퍼 함수들 ====================
+/// 문자열을 RoutineStatus로 변환하는 헬퍼 함수
+RoutineStatus toRoutineStatus(String? value) {
+  if (value == null) return RoutineStatus.active;
+  return RoutineStatus.fromString(value);
 }
 
-// ==================== 변환 유틸리티 함수들 ====================
-
-/// 문자열을 RoutineStatus로 변환
-RoutineStatus toRoutineStatus(String? status) {
-  switch (status) {
-    case 'creating': return RoutineStatus.creating;
-    case 'active': return RoutineStatus.active;
-    case 'paused': return RoutineStatus.paused;
-    case 'completed': return RoutineStatus.completed;
-    case 'failed': return RoutineStatus.failed;
-    case 'cancelled': return RoutineStatus.cancelled;
-    default: return RoutineStatus.creating;
-  }
+/// 문자열을 RecordStatus로 변환하는 헬퍼 함수
+RecordStatus toRecordStatus(String? value) {
+  if (value == null) return RecordStatus.failed;
+  return RecordStatus.fromString(value);
 }
 
-/// 문자열을 MissionDifficulty로 변환
-MissionDifficulty toDifficulty(String? difficulty) {
-  switch (difficulty) {
-    case 'easy': return MissionDifficulty.easy;
-    case 'medium': return MissionDifficulty.medium;
-    case 'hard': return MissionDifficulty.hard;
-    default: return MissionDifficulty.medium;
-  }
+/// 문자열을 MissionDifficulty로 변환하는 헬퍼 함수
+MissionDifficulty toMissionDifficulty(String? value) {
+  if (value == null) return MissionDifficulty.medium;
+  return MissionDifficulty.fromString(value);
 }
 
-/// 문자열을 RecordStatus로 변환
-RecordStatus toRecordStatus(String? status) {
-  switch (status) {
-    case 'success': return RecordStatus.success;
-    case 'failed': return RecordStatus.failed;
-    case 'skipped': return RecordStatus.skipped;
-    case 'partial': return RecordStatus.partial;
-    default: return RecordStatus.failed;
-  }
+/// RoutineStatus를 문자열로 변환하는 헬퍼 함수
+String routineStatusToString(RoutineStatus status) {
+  return status.value;
 }
 
-// ==================== 유틸리티 클래스 ====================
+/// RecordStatus를 문자열로 변환하는 헬퍼 함수
+String recordStatusToString(RecordStatus status) {
+  return status.value;
+}
 
-/// 루틴 관련 유틸리티 함수들
-class RoutineUtils {
-  RoutineUtils._(); // private constructor
+/// 모든 RoutineStatus 목록 반환
+List<RoutineStatus> getAllRoutineStatuses() {
+  return RoutineStatus.values;
+}
 
-  /// 루틴 상태별 진행률 계산
-  static double calculateProgress({
-    required RoutineStatus status,
-    required DateTime startDate,
-    required DateTime endDate,
-    DateTime? completedAt,
-  }) {
-    final now = DateTime.now();
+/// 모든 RecordStatus 목록 반환
+List<RecordStatus> getAllRecordStatuses() {
+  return RecordStatus.values;
+}
 
-    switch (status) {
-      case RoutineStatus.completed:
-        return 1.0;
-      case RoutineStatus.failed:
-      case RoutineStatus.cancelled:
-        return 0.0;
-      case RoutineStatus.creating:
-        return 0.0;
-      case RoutineStatus.active:
-      case RoutineStatus.paused:
-        if (now.isBefore(startDate)) return 0.0;
-        if (now.isAfter(endDate)) return 1.0;
+/// 진행 중인 상태들만 반환
+List<RoutineStatus> getInProgressStatuses() {
+  return RoutineStatus.values.where((status) => status.isInProgress).toList();
+}
 
-        final totalDays = endDate.difference(startDate).inDays + 1;
-        final elapsedDays = now.difference(startDate).inDays + 1;
-        return (elapsedDays / totalDays).clamp(0.0, 1.0);
-    }
+/// 완료된 상태들만 반환
+List<RoutineStatus> getFinishedStatuses() {
+  return RoutineStatus.values.where((status) => status.isFinished).toList();
+}
+
+// ==================== 기타 유틸리티 함수들 ====================
+/// 상태 변경 가능 여부 확인
+bool canChangeStatus(RoutineStatus from, RoutineStatus to) {
+  // 완료된 상태에서는 변경 불가
+  if (from.isFinished && to != RoutineStatus.active) {
+    return false;
   }
 
-  /// 루틴 비용 계산 (하루당 10릿 기본)
-  static int calculateCost(int days, {int dailyRate = 10}) {
-    return days * dailyRate;
+  // 생성 중에서는 활성 또는 취소만 가능
+  if (from == RoutineStatus.creating) {
+    return to == RoutineStatus.active || to == RoutineStatus.cancelled;
   }
 
-  /// 루틴 기간 검증
-  static bool isValidDuration(int days) {
-    return days > 0 && days <= 365; // 1일 ~ 1년
-  }
+  return true;
+}
 
-  /// 루틴 시작일 검증 (오늘 이후만 가능)
-  static bool isValidStartDate(DateTime startDate) {
-    final today = DateTime.now();
-    final todayStart = DateTime(today.year, today.month, today.day);
-    final startDateOnly = DateTime(startDate.year, startDate.month, startDate.day);
-
-    return startDateOnly.isAfter(todayStart) || startDateOnly.isAtSameMomentAs(todayStart);
-  }
-
-  /// 추천 루틴 기간 (목적별)
-  static int getRecommendedDays(String purpose) {
-    final lowerPurpose = purpose.toLowerCase();
-
-    // 운동 관련
-    if (lowerPurpose.contains('운동') || lowerPurpose.contains('조깅') ||
-        lowerPurpose.contains('헬스') || lowerPurpose.contains('요가')) {
-      return 30;
-    }
-
-    // 학습 관련
-    if (lowerPurpose.contains('공부') || lowerPurpose.contains('학습') ||
-        lowerPurpose.contains('독서') || lowerPurpose.contains('영어')) {
-      return 60;
-    }
-
-    // 습관 개선 관련
-    if (lowerPurpose.contains('금연') || lowerPurpose.contains('금주') ||
-        lowerPurpose.contains('다이어트')) {
-      return 90;
-    }
-
-    // 기본값
-    return 21; // 21일 법칙
-  }
-
-  /// 상태 변경 가능성 검증
-  static bool canChangeStatus(RoutineStatus from, RoutineStatus to) {
-    switch (from) {
-      case RoutineStatus.creating:
-        return to == RoutineStatus.active || to == RoutineStatus.cancelled;
-
-      case RoutineStatus.active:
-        return to == RoutineStatus.paused ||
-            to == RoutineStatus.completed ||
-            to == RoutineStatus.failed ||
-            to == RoutineStatus.cancelled;
-
-      case RoutineStatus.paused:
-        return to == RoutineStatus.active ||
-            to == RoutineStatus.cancelled;
-
-      case RoutineStatus.completed:
-      case RoutineStatus.failed:
-      case RoutineStatus.cancelled:
-        return false; // 완료된 상태는 변경 불가
-    }
+/// 다음 가능한 상태들 반환
+List<RoutineStatus> getNextPossibleStatuses(RoutineStatus current) {
+  switch (current) {
+    case RoutineStatus.creating:
+      return [RoutineStatus.active, RoutineStatus.cancelled];
+    case RoutineStatus.active:
+      return [RoutineStatus.paused, RoutineStatus.completed, RoutineStatus.failed, RoutineStatus.cancelled];
+    case RoutineStatus.paused:
+      return [RoutineStatus.active, RoutineStatus.cancelled];
+    case RoutineStatus.completed:
+    case RoutineStatus.failed:
+    case RoutineStatus.cancelled:
+      return [RoutineStatus.active]; // 재시작만 가능
   }
 }

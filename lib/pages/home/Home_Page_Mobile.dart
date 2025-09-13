@@ -125,7 +125,7 @@ class _HomePageMobileState extends State<HomePageMobile> {
                       if (questProvider.hasQuests) ...[
                         SizedBox(height: 12.h),
                         _buildProgressIndicator(context, questProvider),
-                      ],
+                      ]
                     ],
                   ),
                 ),
